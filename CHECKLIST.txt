@@ -1,0 +1,20 @@
+PV WEBSITE - CHECKLIST
+
+STAGE 1 - STATIC SITE
+[x] Site skeleton: Home, The Realm, Land Rush (countdown), For business, Help (Herald), Contact, Privacy, Terms, 404
+[ ] Owner uploads site/ to Cloudflare (Workers & Pages) -> preview address
+[ ] Owner review of the preview
+
+DOMAIN
+[x] Cloudflare account + zone added (not activated)
+[ ] Compare with the live DNS list at GoDaddy / Wix (google._domainkey!)
+[ ] Fix Wix email CNAMEs to DNS only; remove old Wix site records
+[ ] Switch nameservers at GoDaddy; verify email still works
+[ ] Point www + apex to the Cloudflare site
+
+STAGE 2 - ACCOUNTS AND CLAIMS
+[ ] Private GitHub repo pv-website; Cloudflare Secrets (owner pastes salts + token)
+[ ] Accounts (email link sign-in, VRChat name, 18+ tick); admin
+[ ] Claim checker + placement (independent review)
+[ ] Hourly publisher -> realm repo (test branch first)
+[ ] Privacy Policy + Terms drafts -> attorney
