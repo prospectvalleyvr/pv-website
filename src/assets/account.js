@@ -10,7 +10,8 @@
   function show(signedIn) { $("signed-out").hidden = signedIn; $("signed-in").hidden = !signedIn; }
 
   var err = new URLSearchParams(location.search).get("error");
-  if (err) say($("signin-msg"), "Sign-in didn't finish. Please try again.", false);
+  var why = new URLSearchParams(location.search).get("why");
+  if (err) say($("signin-msg"), "Sign-in didn't finish. Please try again." + (why ? " (" + why.replace(/[^a-z0-9_]/gi, "") + ")" : ""), false);
 
   fetch("/api/me", { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (me) {
     if (!me.signedIn) { show(false); return; }

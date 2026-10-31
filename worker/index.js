@@ -91,7 +91,7 @@ function discordLogin(request, env, url) {
   const state = randomToken(24);
   const q = new URLSearchParams({
     client_id: env.DISCORD_CLIENT_ID, response_type: "code", scope: "identify email",
-    redirect_uri: url.origin + "/auth/discord/callback", state, prompt: "none",
+    redirect_uri: url.origin + "/auth/discord/callback", state,
   });
   return new Response(null, {
     status: 302,
@@ -102,7 +102,10 @@ function discordLogin(request, env, url) {
 async function discordCallback(request, env, url) {
   const state = url.searchParams.get("state"), code = url.searchParams.get("code");
   const expected = cookie(request, STATE_COOKIE);
-  if (!code || !state || !expected || state !== expected) return redirect("/account.html?error=signin");
+  if (url.searchParams.get("error")) return redirect("/account.html?error=signin&why=" + encodeURIComponent(url.searchParams.get("error").slice(0, 40)));
+  if (!code || !state) return redirect("/account.html?error=signin&why=nocode");
+  if (!expected || state !== expected) return redirect("/account.html?error=signin&why=state");
+  if (!env.DISCORD_CLIENT_SECRET) return redirect("/account.html?error=signin&why=nosecret");
   const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -111,10 +114,13 @@ async function discordCallback(request, env, url) {
       code, redirect_uri: url.origin + "/auth/discord/callback",
     }),
   });
-  if (!tokenRes.ok) return redirect("/account.html?error=signin");
+  if (!tokenRes.ok) {
+    console.log("PV discord token", tokenRes.status, (await tokenRes.text()).slice(0, 200));
+    return redirect("/account.html?error=signin&why=token" + tokenRes.status);
+  }
   const tok = await tokenRes.json();
   const meRes = await fetch("https://discord.com/api/users/@me", { headers: { Authorization: "Bearer " + tok.access_token } });
-  if (!meRes.ok) return redirect("/account.html?error=signin");
+  if (!meRes.ok) return redirect("/account.html?error=signin&why=me" + meRes.status);
   const me = await meRes.json();
   const email = me.verified && me.email ? String(me.email).slice(0, 200) : null;
   return signIn(env, "discord", String(me.id), email);
