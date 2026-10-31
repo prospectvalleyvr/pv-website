@@ -26,3 +26,7 @@ Herald (the concierge voice for Help/FAQ): PV_Reference/PV_Herald.md.
   DNS only, not proxied); 5 MX → Google Workspace (keep); TXT spf + google-site-verification (keep).
 - Still to check before switching nameservers: the live record list at the current DNS host (GoDaddy or Wix),
   especially google._domainkey (Google Workspace DKIM), which the scan did not show.
+
+## Deploys
+- Oct 31: first upload via the dashboard (Workers & Pages → static upload). Worker name `square-snowflake-2d1c` (auto-named; rename to `prospectvalley` in its Settings if wanted). Preview: https://square-snowflake-2d1c.twilight-tooth-9ded.workers.dev
+- To update: Workers & Pages → the worker → New deployment → upload the `site` folder again.

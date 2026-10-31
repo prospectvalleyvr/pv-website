@@ -2,7 +2,7 @@ PV WEBSITE - CHECKLIST
 
 STAGE 1 - STATIC SITE
 [x] Site skeleton: Home, The Realm, Land Rush (countdown), For business, Help (Herald), Contact, Privacy, Terms, 404
-[ ] Owner uploads site/ to Cloudflare (Workers & Pages) -> preview address
+[x] Owner uploaded site/ to Cloudflare Oct 31: Worker 'square-snowflake-2d1c' -> https://square-snowflake-2d1c.twilight-tooth-9ded.workers.dev
 [ ] Owner review of the preview
 
 DOMAIN
