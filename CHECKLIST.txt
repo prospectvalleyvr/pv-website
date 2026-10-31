@@ -7,7 +7,7 @@ STAGE 1 - STATIC SITE
 
 DOMAIN
 [x] Cloudflare account + zone added (not activated)
-[ ] Compare with the live DNS list at GoDaddy / Wix (google._domainkey!)
+[ ] PARKED (owner, Oct 31) until needed - before Google sign-in or public launch. Then: compare with the live DNS list at GoDaddy / Wix (google._domainkey!)
 [ ] Fix Wix email CNAMEs to DNS only; remove old Wix site records
 [ ] Switch nameservers at GoDaddy; verify email still works
 [ ] Point www + apex to the Cloudflare site
