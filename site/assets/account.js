@@ -37,6 +37,7 @@
       if (!r.ok) { say($("code-msg"), r.message, false); return; }
       say($("code-msg"), r.message + " Origin: " + r.origin + " · Calling: " + r.calling + " · Heart: " + (HEARTS[r.heart] || "") + " · Made " + r.made + ".", true);
       $("verified").textContent = "Verified by your claim code";
+      $("heart").textContent = HEARTS[r.heart] || "–";
     });
   });
   $("delete-form").addEventListener("submit", function (e) {
