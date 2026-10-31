@@ -9,7 +9,7 @@ SRC = os.path.join(ROOT, "src")
 YEAR = datetime.date.today().year
 
 NAV = [("index.html", "Home"), ("realm.html", "The Realm"), ("land-rush.html", "Land Rush"),
-       ("business.html", "For business"), ("help.html", "Help"), ("contact.html", "Contact")]
+       ("business.html", "For business"), ("help.html", "Help"), ("contact.html", "Contact"), ("account.html", "Account")]
 
 MARK = open(os.path.join(SRC, "assets", "pv-mark.svg"), encoding="utf-8").read().replace(
     'role="img" aria-label="Prospect Valley"', 'aria-hidden="true"')
@@ -51,7 +51,7 @@ def page(fname, title, desc, body, hero=None, scripts=False):
   <p class="fine">© {YEAR} PVVR, LLC · Prospect Valley VR · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a><br>
   VRChat is a trademark of VRChat Inc. Prospect Valley is an independent creator project and is not affiliated with or endorsed by VRChat Inc.</p>
 </div></footer>
-{'<script src="/assets/site.js" defer></script>' if scripts else ''}
+{('<script src="/assets/' + (scripts if isinstance(scripts, str) else 'site.js') + '" defer></script>') if scripts else ''}
 </body>
 </html>
 """
@@ -206,12 +206,22 @@ PAGES.append(("contact.html", "Contact",
 # ---------------------------------------------------------------- Privacy / Terms (interim)
 PAGES.append(("privacy.html", "Privacy",
  "Prospect Valley privacy notice.",
- hero("Privacy", "Privacy", "A short, plain notice while the website is in its first stage.", cls="hero page-hero"),
+ hero("Privacy", "Privacy", "A short, plain notice while the website is being built. A full privacy policy will be published before Homestead claims open.", cls="hero page-hero"),
  """
 <section class="block"><div class="wrap prose">
-  <p><strong>Right now this website collects no personal information.</strong> There are no accounts, no forms, no advertising and no tracking cookies. The Land Rush page reads a public file to show the countdown; it sends nothing about you.</p>
-  <p>If you email us, we use your message only to reply.</p>
-  <p>Before Homestead claims open we will publish a full privacy policy explaining exactly what an account stores (for example your email address and VRChat display name), how long we keep it, and how to download or delete it.</p>
+  <h2>What we keep</h2>
+  <p>Browsing this website collects nothing about you: no advertising, no tracking cookies, no analytics. The Land Rush page reads a public file to show the countdown and sends nothing about you.</p>
+  <p>If you <strong>create an account</strong> (sign in with Discord, or Google when available), we keep only:</p>
+  <ul>
+    <li>the account number your sign-in provider gives us, so we recognise you next time – never your password;</li>
+    <li>your email address, if your provider shares a verified one – used only for Homestead renewal reminders and replies to you;</li>
+    <li>the VRChat display name you type, and whether you ticked "I am 18 or older";</li>
+    <li>from a claim code you check: your origin, calling and heart answer, and the date the code was made;</li>
+    <li>one sign-in cookie, which keeps you signed in for up to 30 days.</li>
+  </ul>
+  <p>We never sell or share this information. Players under 18 – or anyone who hasn't ticked the 18+ box – are never shown by name and can't be found by others on the public owner lists.</p>
+  <h2>Your choices</h2>
+  <p>On your account page you can <strong>download your data</strong> or <strong>delete your account</strong> at any time. Deleting removes it straight away.</p>
   <p>Questions: <a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a></p>
 </div></section>
 """))
@@ -225,6 +235,61 @@ PAGES.append(("terms.html", "Terms",
   <p>Homesteads are a free licence to use a plot in the game; they are not an investment. Nothing in Prospect Valley can be cashed out for real money.</p>
 </div></section>
 """))
+
+# ---------------------------------------------------------------- Account
+PAGES.append(("account.html", "Account",
+ "Your Prospect Valley account – sign in, link your VRChat display name, check your Homestead claim code.",
+ hero("Your account", "Your place in the Realm", "Sign in, link your VRChat display name, and check your Homestead claim code.", cls="hero page-hero"),
+ """
+<section class="block"><div class="wrap">
+  <div id="signed-out">
+    <h2>Sign in</h2>
+    <p class="intro">No passwords: sign in with an account you already have. We only learn your account number and, if shared, your email.</p>
+    <div class="signin-btns">
+      <a class="btn discord" href="/auth/discord/login">Sign in with Discord</a>
+      <a class="btn discord" aria-disabled="true" href="#">Sign in with Google (coming soon)</a>
+    </div>
+    <p class="msg" id="signin-msg"></p>
+  </div>
+  <div id="signed-in" hidden>
+    <h2>Welcome</h2>
+    <dl class="facts"><dt>Member since</dt><dd id="since"></dd><dt>Email</dt><dd id="email"></dd><dt>Display name</dt><dd id="verified"></dd><dt>Heart's home</dt><dd id="heart">–</dd></dl>
+
+    <div class="card"><h3>Your VRChat display name</h3>
+      <form class="form" id="profile-form">
+        <label for="vrchat-name">Exactly as it appears in VRChat – capitals and spaces too</label>
+        <input type="text" id="vrchat-name" maxlength="32" autocomplete="off">
+        <label class="check"><input type="checkbox" id="adult"> I am 18 or older. (Leave this unticked if you're under 18 – your name will never be shown publicly.)</label>
+        <button class="btn green" type="submit">Save</button>
+        <p class="msg" id="profile-msg"></p>
+      </form>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Check your Homestead claim code</h3>
+      <form class="form" id="code-form">
+        <label for="claim-code">Make it at the Scroll Desk beside the Birth Gate in the Celestial Garden</label>
+        <input type="text" id="claim-code" maxlength="40" autocomplete="off" placeholder="HC-XXXXX-XXXXX-XXXXX-XXXXX">
+        <button class="btn green" type="submit">Check my code</button>
+        <p class="msg" id="code-msg"></p>
+      </form>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Your data</h3>
+      <p><a href="/api/export">Download my data</a></p>
+      <form method="post" action="/auth/logout"><button class="btn green" type="submit">Sign out</button></form>
+    </div>
+    <div class="spacer"></div>
+    <div class="card danger"><h3>Delete my account</h3>
+      <form class="form" id="delete-form">
+        <label for="delete-confirm">Type DELETE to remove your account and everything we keep about you.</label>
+        <input type="text" id="delete-confirm" maxlength="10" autocomplete="off">
+        <button class="btn green" type="submit">Delete my account</button>
+        <p class="msg" id="delete-msg"></p>
+      </form>
+    </div>
+  </div>
+</div></section>
+""", "account.js"))
 
 # ---------------------------------------------------------------- 404
 PAGES.append(("404.html", "Page not found",
