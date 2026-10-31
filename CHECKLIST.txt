@@ -13,7 +13,9 @@ DOMAIN
 [ ] Point www + apex to the Cloudflare site
 
 STAGE 2 - ACCOUNTS AND CLAIMS
-[ ] Private GitHub repo pv-website; Cloudflare Secrets (owner pastes salts + token)
+[x] Private GitHub repo pv-website (pushed Oct 31; tools/push.sh reads the token from C:\VRChat Projects\PV Keys)
+[ ] Cloudflare Workers Builds connected to pv-website (auto deploy on push)
+[ ] Cloudflare Secrets: DISCORD_CLIENT_SECRET, GOOGLE_CLIENT_SECRET, SALT_HC, SALT_LC, GITHUB_TOKEN (publisher)
 [ ] Accounts (email link sign-in, VRChat name, 18+ tick); admin
 [x] Claim code checker (worker/lib/codes.js) - 311/311 tests vs pv_realm_tools.py, Oct 31
 [ ] Placement + D1 schema (independent review)
