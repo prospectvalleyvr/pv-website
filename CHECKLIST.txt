@@ -14,7 +14,7 @@ DOMAIN
 
 STAGE 2 - ACCOUNTS AND CLAIMS
 [x] Private GitHub repo pv-website (pushed Oct 31; tools/push.sh reads the token from C:\VRChat Projects\PV Keys)
-[ ] Cloudflare Workers Builds connected to pv-website (auto deploy on push)
+[x] Cloudflare Workers Builds connected to pv-website (auto deploy on push) - first good build Oct 31
 [ ] Cloudflare Secrets: DISCORD_CLIENT_SECRET, GOOGLE_CLIENT_SECRET, SALT_HC, SALT_LC, GITHUB_TOKEN (publisher)
 [ ] Accounts (email link sign-in, VRChat name, 18+ tick); admin
 [x] Claim code checker (worker/lib/codes.js) - 311/311 tests vs pv_realm_tools.py, Oct 31
