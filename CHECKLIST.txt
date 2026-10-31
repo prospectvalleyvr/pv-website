@@ -15,6 +15,7 @@ DOMAIN
 STAGE 2 - ACCOUNTS AND CLAIMS
 [ ] Private GitHub repo pv-website; Cloudflare Secrets (owner pastes salts + token)
 [ ] Accounts (email link sign-in, VRChat name, 18+ tick); admin
-[ ] Claim checker + placement (independent review)
+[x] Claim code checker (worker/lib/codes.js) - 311/311 tests vs pv_realm_tools.py, Oct 31
+[ ] Placement + D1 schema (independent review)
 [ ] Hourly publisher -> realm repo (test branch first)
 [ ] Privacy Policy + Terms drafts -> attorney
