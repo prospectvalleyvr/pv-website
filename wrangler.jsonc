@@ -1,7 +1,17 @@
 // Cloudflare deploy settings for www.ProspectValleyVR.com (Workers Builds runs `npx wrangler deploy` on every push to main).
-// Stage 1: static pages from ./site. Stage 2 adds "main": "worker/index.js" and the D1 database binding.
+// Static pages from ./site; the Worker (worker/index.js) answers /auth/* and /api/*.
+// Secrets are set in the Cloudflare dashboard, never here: DISCORD_CLIENT_SECRET, SALT_HC (later GOOGLE_CLIENT_SECRET, SALT_LC, GITHUB_TOKEN).
 {
   "name": "square-snowflake-2d1c",
+  "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./site", "not_found_handling": "404-page" }
+  "assets": { "directory": "./site", "binding": "ASSETS", "not_found_handling": "404-page" },
+  "vars": {
+    "DISCORD_CLIENT_ID": "1566161957910741142",
+    "CLAIMS_OPEN": "false"
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "pv-realm", "database_id": "88a8ab1a-9918-4a57-9dc0-1a299a54c2e3" }
+  ],
+  "keep_vars": true
 }
