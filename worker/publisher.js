@@ -13,7 +13,7 @@
 // secret GITHUB_TOKEN (fine-grained, Contents read/write).
 
 import { nameHash32Hex } from "./lib/codes.js";
-import { fillNameBuckets } from "./claims.js";
+import { fillNameBuckets, readMeta, claimsOpenFrom, OPENS_RE } from "./claims.js";
 
 const API = "https://api.github.com";
 const MAX_ITEMS = 40;
@@ -40,8 +40,8 @@ async function publishLocked(env, reason) {
   const branch = env.FEED_BRANCH || "feed-test";
   await fillNameBuckets(env);
   const dirty = (await env.DB.prepare(`SELECT item, seq FROM feed_dirty ORDER BY item LIMIT ?`).bind(MAX_ITEMS).all()).results;
-  const meta = Object.fromEntries((await env.DB.prepare(`SELECT k, v FROM meta`).all()).results.map(r => [r.k, r.v]));
-  const claimsState = env.CLAIMS_OPEN === "true" ? "open" : "closed";
+  const meta = await readMeta(env);
+  const claimsState = claimsOpenFrom(meta) ? "open" : "closed";
   const indexWanted = meta.index_dirty === "1" || !meta.index_rev || meta.claims_state !== claimsState;
   if (!dirty.length && !indexWanted) return { ok: true, skipped: "nothing changed" };
 
@@ -83,7 +83,7 @@ async function publishLocked(env, reason) {
   });
   const index = { format: "pv-feed-1", rev, time: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
                   lands: { giz: { rev, claims: claimsState } } };
-  if (meta.opens && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(meta.opens)) index.opens = meta.opens;
+  if (meta.opens && OPENS_RE.test(meta.opens)) index.opens = meta.opens;
   files["feed/index.json"] = JSON.stringify(index);
 
   for (const [path, body] of Object.entries(files)) {

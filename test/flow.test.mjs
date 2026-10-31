@@ -58,7 +58,7 @@ globalThis.fetch = async (url, init = {}) => {
   return new Response("unexpected " + m + " " + u, { status: 500 });
 };
 
-const env = { DB, SALT_HC: SALT, CLAIMS_OPEN: "true", PUBLISH_ENABLED: "true", GITHUB_TOKEN: "test", FEED_REPO: "t/realm", FEED_BRANCH: "feed-test",
+const env = { DB, SALT_HC: SALT, ADMINS: "discord:42", PUBLISH_ENABLED: "true", GITHUB_TOKEN: "test", FEED_REPO: "t/realm", FEED_BRANCH: "feed-test",
               ASSETS: { fetch: async () => new Response("asset") } };
 const ORIGIN = "https://pv.test";
 async function call(path, session, body, method) {
@@ -79,9 +79,32 @@ async function addAccount(id, name, adult, session) {
 await call("/api/me");                                          // creates the tables
 const ADULT = "Test Player One", KID = "Kid Player";
 await addAccount(1, ADULT, 1, "s1"); await addAccount(2, ADULT, 1, "s2"); await addAccount(3, KID, 0, "s3");
-ok("backfill name_bucket", true);
+sqlite.prepare(`INSERT INTO identities VALUES ('discord', '42', 1, 'x')`).run();
+sqlite.prepare(`INSERT INTO identities VALUES ('discord', '77', 2, 'x')`).run();
 
-let r = await call("/api/offers?district=nile-valley", "s1");
+// ---------------------------------------------------------------- admin page: Land Rush settings
+let r = await call("/api/admin/status", "s2");
+ok("non-admin sees only their key", r.ok && r.admin === false && r.key === "discord:77", r);
+r = await call("/api/admin/settings", "s2", { claimsMode: "open", confirm: "OPEN" });
+ok("non-admin can't change settings", r.status === 403, r);
+r = await call("/api/admin/status", "s1");
+ok("admin status", r.ok && r.admin && r.settings.claimsMode === "closed" && r.homesteads.length === 4, r);
+r = await call("/api/claim", "s1", { code: "x", key: 1 });
+ok("claims closed by default", r.status === 403, r);
+r = await call("/api/admin/settings", "s1", { claimsMode: "open" });
+ok("opening needs OPEN typed", !r.ok, r);
+const future = new Date(Date.now() + 86400000).toISOString().replace(/\.\d+Z$/, "Z");
+r = await call("/api/admin/settings", "s1", { claimsMode: "auto", opens: future, confirm: "OPEN" });
+ok("auto mode with a future time", r.ok, r);
+r = await call("/api/me", "s1");
+ok("…claims still closed before the time", r.claimsOpen === false, r);
+const past = new Date(Date.now() - 60000).toISOString().replace(/\.\d+Z$/, "Z");
+r = await call("/api/admin/settings", "s1", { claimsMode: "auto", opens: past });
+r = await call("/api/me", "s1");
+ok("…and open once the time has passed", r.claimsOpen === true, r);
+ok("settings logged", q(`SELECT COUNT(*) n FROM admin_log`)[0].n === 2);
+
+r = await call("/api/offers?district=nile-valley", "s1");
 ok("offers need a checked code", r.status === 400, r);
 const c1 = makeCode(ADULT, 1);
 r = await call("/api/check-code", "s1", { code: c1 });
@@ -125,6 +148,7 @@ const home1 = q(`SELECT key, parcel FROM plots WHERE account_id = 1`)[0], homeK 
 const pf = (parcel) => repoFiles[`feed/giz/${parcel.toLowerCase()}.json`];
 const row = (parcel, key) => (pf(parcel) ? pf(parcel).plots.find(p => p[0] === key) : null);
 ok("index published", repoFiles["feed/index.json"] && repoFiles["feed/index.json"].rev === 1, repoFiles["feed/index.json"]);
+ok("index carries claims open + opening time", repoFiles["feed/index.json"].lands.giz.claims === "open" && repoFiles["feed/index.json"].opens === past, repoFiles["feed/index.json"]);
 ok("adult owner hash published", row(home1.parcel, home1.key) && row(home1.parcel, home1.key)[2] === nameHash32Hex(ADULT));
 ok("kid's plot published with NO owner hash", row(homeK.parcel, homeK.key) && row(homeK.parcel, homeK.key)[2] === "");
 const bucketA = nameHash32Hex(ADULT).slice(0, 2), bucketK = nameHash32Hex(KID).slice(0, 2);
@@ -181,6 +205,14 @@ r = await call("/api/offers?district=oasis", "s1");
 ok("offers keep coming after 60 full rings", r.ok && r.plots.length === 6 && !r.plots.some(p => full.some(f => f.key === p.key)), r.plots && r.plots.length);
 const cur = q(`SELECT ring FROM place_cursor WHERE district = 'oasis'`)[0];
 ok("oasis cursor moved out", cur && cur.ring > START_RING.oasis + 59, cur);
+
+// admin "publish now"
+sqlite.prepare(`INSERT INTO feed_dirty (item, seq) VALUES ('owners:01', 1)`).run();
+r = await call("/api/admin/publish", "s1", {});
+ok("admin publish now", r.ok && /Published feed rev/.test(r.message), r);
+r = await call("/api/admin/settings", "s1", { claimsMode: "closed", opens: "" });
+r = await call("/api/me", "s1");
+ok("admin can close claims again", r.ok && r.claimsOpen === false, r);
 
 console.log(`PV website flow test: ${pass} passed, ${failN} failed.`);
 process.exit(failN ? 1 : 0);

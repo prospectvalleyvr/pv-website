@@ -5,8 +5,9 @@
 // Database: D1 binding DB (tables are created on first use).
 
 import { decodeClaim, nameHash32Hex } from "./lib/codes.js";
-import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlotsStatements, districtsForHeart, markDirty, takeCodeTry, fillNameBuckets } from "./claims.js";
+import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlotsStatements, districtsForHeart, markDirty, takeCodeTry, fillNameBuckets, claimsOpen } from "./claims.js";
 import { publish } from "./publisher.js";
+import { adminRoute } from "./admin.js";
 
 const SESSION_COOKIE = "__Host-pv_session";
 const STATE_COOKIE = "__Host-pv_oauth";
@@ -47,9 +48,10 @@ async function route(request, env, url) {
   if (m !== "GET" && !sameOrigin(request, url)) return json({ ok: false, message: "Request refused." }, 403);
   const acct = await currentAccount(request, env);
   if (p === "/api/me" && m === "GET") {
-    if (!acct) return json({ ok: true, signedIn: false, account: null, claimsOpen: env.CLAIMS_OPEN === "true" });
+    const open = await claimsOpen(env);
+    if (!acct) return json({ ok: true, signedIn: false, account: null, claimsOpen: open });
     const districts = acct.heart === null || acct.heart === undefined ? [] : districtsForHeart(acct.heart);
-    return json({ ok: true, signedIn: true, account: publicAccount(acct), claimsOpen: env.CLAIMS_OPEN === "true",
+    return json({ ok: true, signedIn: true, account: publicAccount(acct), claimsOpen: open,
                   homestead: await homesteadOf(env, acct.id), districts });
   }
   if (!acct) return json({ ok: false, message: "Please sign in first." }, 401);
@@ -62,6 +64,7 @@ async function route(request, env, url) {
     return json({ ok: true, district: d, plots: await offers(env, d) });
   }
   if (p === "/api/claim" && m === "POST") { const r = await claim(env, acct, await readJson(request)); return json(r, r.status || 200); }
+  if (p.startsWith("/api/admin/")) return adminRoute(request, env, url, acct, json);
   if (p === "/api/export" && m === "GET") return exportData(env, acct);
   if (p === "/api/delete" && m === "POST") return deleteAccount(request, env, acct);
   return json({ ok: false, message: "Not found." }, 404);
@@ -236,10 +239,11 @@ async function checkCode(request, env, acct) {
   if (!acct.name_verified) stmts.push(...await ownerMarks(env, acct, [acct.vrchat_name]));
   try { await env.DB.batch(stmts); }
   catch (e) { return json({ ok: false, message: "That display name is already linked to another account. Write to Info@ProspectValleyVR.com and we'll sort it out." }, 409); }
+  const open = await claimsOpen(env);
   return json({
     ok: true, kind: r.kind, origin: r.originName, calling: r.callingName, heart: r.heart, made: r.made,
-    claimsOpen: env.CLAIMS_OPEN === "true",
-    message: env.CLAIMS_OPEN === "true" ? "Your code is good." : "Your code is good. Homestead claims open with the Land Rush – bring a fresh code then.",
+    claimsOpen: open,
+    message: open ? "Your code is good." : "Your code is good. Homestead claims open with the Land Rush – bring a fresh code then.",
   });
 }
 

@@ -50,3 +50,9 @@ Herald (the concierge voice for Help/FAQ): PV_Reference/PV_Herald.md.
 - npm test runs codes + giza + flow (flow uses node:sqlite as a D1 stand-in and a fake GitHub).
 - Copying to the device: device_commit_files can deliver an old copy if a staged path is reused – use a fresh
   folder name each time and check md5sum on the device.
+
+## Admin page (Oct 31)
+- /admin.html (not in the menu, noindex) + worker/admin.js. Admins = ADMINS var in wrangler.jsonc ("discord:<id>", comma list).
+  A non-admin who opens the page sees their own key to send to Claude.
+- Land Rush settings live in D1 meta: claims_mode closed|open|auto, opens (UTC ISO). claimsOpen(env) is the only test –
+  never read a CLAIMS_OPEN var again. Opening from closed needs the word OPEN. Every admin action goes to admin_log.

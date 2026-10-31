@@ -35,3 +35,9 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [x] First hourly run landed on realm/feed-test (Oct 31 22:07 UTC, feed rev 1, claims closed)
 [ ] Later: FEED_BRANCH main (when the worlds should read live ownership)
 [ ] Privacy Policy + Terms drafts -> attorney
+
+ADMIN PAGE (Oct 31)
+[x] /admin.html + worker/admin.js: Land Rush opening time; claims closed / open by themselves at that time / open now (type OPEN); Publish now; counts; admin log
+[x] Claims switch moved from the CLAIMS_OPEN var into the database; publisher every 15 minutes
+[x] flow test 47/0 incl. admin checks
+[ ] Owner: open /admin.html signed in, send Claude the key shown; Claude adds it to ADMINS

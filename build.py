@@ -299,6 +299,56 @@ PAGES.append(("account.html", "Account",
 </div></section>
 """, "account.js"))
 
+# ---------------------------------------------------------------- admin (owner only; not in the menu, not indexed)
+PAGES.append(("admin.html", "Admin",
+ "Prospect Valley admin.",
+ hero("Owners only", "Realm admin", "Land Rush timing, Homestead claims and the feed.", cls="hero page-hero"),
+ """
+<section class="block"><div class="wrap">
+  <p class="msg" id="admin-msg">Loading…</p>
+  <div id="not-admin" hidden>
+    <h2>Not an admin account</h2>
+    <p class="intro">This page is for the Realm's owners. If that's you, send this key to Claude to be added:</p>
+    <p class="note"><code id="admin-key"></code></p>
+    <p><a href="/account.html">Go to your account</a></p>
+  </div>
+  <div id="admin" hidden>
+    <div class="card"><h3>Land Rush</h3>
+      <form class="form" id="settings-form">
+        <label for="opens">Opening date and time (your local time)</label>
+        <input type="datetime-local" id="opens">
+        <fieldset class="choices"><legend>Homestead claims</legend>
+          <label class="check"><input type="radio" name="mode" value="closed"> Closed</label>
+          <label class="check"><input type="radio" name="mode" value="auto"> Open by themselves at the opening time</label>
+          <label class="check"><input type="radio" name="mode" value="open"> Open now</label>
+        </fieldset>
+        <div id="confirm-box" hidden>
+          <p class="note">Before opening: privacy policy and terms checked by the attorney; Garden production upload done.</p>
+          <label for="confirm">Type OPEN to confirm</label>
+          <input type="text" id="confirm" maxlength="10" autocomplete="off">
+        </div>
+        <button class="btn green" type="submit">Save</button>
+        <p class="msg" id="settings-msg"></p>
+      </form>
+      <p id="state-line"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Feed</h3>
+      <p id="feed-line"></p>
+      <div class="btns"><button class="btn green" type="button" id="publish-btn">Publish now</button></div>
+      <p class="msg" id="publish-msg"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Homesteads</h3>
+      <div class="table-wrap"><table class="lands"><thead><tr><th>District</th><th>Claimed</th><th>Plots</th></tr></thead><tbody id="home-rows"></tbody></table></div>
+      <p id="acct-line"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Recent admin actions</h3><ul id="log"></ul></div>
+  </div>
+</div></section>
+""", "admin.js"))
+
 # ---------------------------------------------------------------- 404
 PAGES.append(("404.html", "Page not found",
  "Page not found.",
@@ -314,15 +364,18 @@ def build():
     for p in PAGES:
         fname, title, desc, h, body = p[:5]
         scripts = p[5] if len(p) > 5 else False
+        html = page(fname, title, desc, body, hero=h, scripts=scripts)
+        if fname == "admin.html":
+            html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="robots" content="noindex, nofollow">')
         with open(os.path.join(OUT, fname), "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(page(fname, title, desc, body, hero=h, scripts=scripts))
+            fh.write(html)
     # security headers for Cloudflare (Pages / Workers static assets)
     with open(os.path.join(OUT, "_headers"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write("/*\n  X-Content-Type-Options: nosniff\n  X-Frame-Options: DENY\n  Referrer-Policy: strict-origin-when-cross-origin\n"
                  "  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
                  "  Content-Security-Policy: default-src 'self'; connect-src 'self' https://prospectvalleyvr.github.io; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'\n")
     with open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("User-agent: *\nAllow: /\n")
+        fh.write("User-agent: *\nDisallow: /admin.html\nAllow: /\n")
     print("built", len(PAGES), "pages into", OUT)
 
 if __name__ == "__main__":

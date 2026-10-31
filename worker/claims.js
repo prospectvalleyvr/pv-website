@@ -33,10 +33,25 @@ export const CLAIM_TABLES = [
   // running is never lost (the publisher only removes the exact seq it published).
   `CREATE TABLE IF NOT EXISTS feed_dirty (item TEXT PRIMARY KEY, seq INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS admin_log (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, account_id INTEGER NOT NULL, action TEXT NOT NULL, detail TEXT)`,
   `CREATE TABLE IF NOT EXISTS dirty (item TEXT PRIMARY KEY)`,   // first version of the list: moved across, then emptied
   `INSERT INTO feed_dirty (item, seq) SELECT item, 1 FROM dirty WHERE true ON CONFLICT(item) DO UPDATE SET seq = feed_dirty.seq + 1`,
   `DELETE FROM dirty`,
 ];
+
+// ---------------------------------------------------------------- Land Rush settings (admin page; stored in meta)
+// claims_mode: "closed" (default) | "open" | "auto" (opens by itself at the `opens` time). opens: "YYYY-MM-DDTHH:MM:SSZ" or none.
+export const OPENS_RE = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
+export function claimsOpenFrom(meta, nowMs = Date.now()) {
+  const mode = meta.claims_mode || "closed";
+  if (mode === "open") return true;
+  if (mode === "auto" && meta.opens && OPENS_RE.test(meta.opens)) return nowMs >= Date.parse(meta.opens);
+  return false;
+}
+export async function readMeta(env) {
+  return Object.fromEntries((await env.DB.prepare(`SELECT k, v FROM meta`).all()).results.map(r => [r.k, r.v]));
+}
+export async function claimsOpen(env) { return claimsOpenFrom(await readMeta(env)); }
 
 /** Statement: mark a feed item (e.g. "parcel:giz:E5", "owners:3f") as changed. */
 export const markDirty = (env, item) =>
@@ -108,7 +123,7 @@ const TAKEN = { status: 409, ok: false, message: "That plot has just been taken 
 
 /** POST /api/claim { code, key } */
 export async function claim(env, acct, body) {
-  if (env.CLAIMS_OPEN !== "true") return { status: 403, ok: false, message: "Homestead claims open with the Land Rush." };
+  if (!(await claimsOpen(env))) return { status: 403, ok: false, message: "Homestead claims open with the Land Rush." };
   if (!env.SALT_HC) return { status: 503, ok: false, message: "Code checking isn't switched on yet." };
   if (!acct.vrchat_name) return { status: 400, ok: false, message: "Add your VRChat display name first." };
   if (await homesteadOf(env, acct.id)) return { status: 409, ok: false, message: "You already have a Homestead – one per player." };

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Prospect Valley</title>
+<meta name="description" content="Prospect Valley admin.">
+<meta name="theme-color" content="#0f2e1c">
+<link rel="icon" href="/assets/pv-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/style.css">
+<meta property="og:title" content="Admin · Prospect Valley">
+<meta property="og:description" content="Prospect Valley admin.">
+<meta property="og:type" content="website">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head"><div class="wrap">
+  <a class="brand" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+  <circle cx="32" cy="32" r="30" fill="#0f2e1c" stroke="#ffdb4d" stroke-width="3"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#c9ccd1" stroke-width="1.2" opacity=".7"/>
+  <path d="M14 42 L26 26 L32 33 L38 24 L50 42 Z" fill="#1f5a32" stroke="#6fbf83" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="32" y="22" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="13" fill="#ffdb4d">PV</text>
+</svg>
+<span>Prospect Valley</span></a>
+  <nav class="nav" aria-label="Main"><a href="/">Home</a><a href="/realm.html">The Realm</a><a href="/land-rush.html">Land Rush</a><a href="/business.html">For business</a><a href="/help.html">Help</a><a href="/contact.html">Contact</a><a href="/account.html">Account</a></nav>
+</div></header>
+<main id="main">
+<section class="hero page-hero"><div class="wrap"><p class="eyebrow">Owners only</p><h1>Realm admin</h1><p class="lead">Land Rush timing, Homestead claims and the feed.</p></div></section>
+
+<section class="block"><div class="wrap">
+  <p class="msg" id="admin-msg">Loading…</p>
+  <div id="not-admin" hidden>
+    <h2>Not an admin account</h2>
+    <p class="intro">This page is for the Realm's owners. If that's you, send this key to Claude to be added:</p>
+    <p class="note"><code id="admin-key"></code></p>
+    <p><a href="/account.html">Go to your account</a></p>
+  </div>
+  <div id="admin" hidden>
+    <div class="card"><h3>Land Rush</h3>
+      <form class="form" id="settings-form">
+        <label for="opens">Opening date and time (your local time)</label>
+        <input type="datetime-local" id="opens">
+        <fieldset class="choices"><legend>Homestead claims</legend>
+          <label class="check"><input type="radio" name="mode" value="closed"> Closed</label>
+          <label class="check"><input type="radio" name="mode" value="auto"> Open by themselves at the opening time</label>
+          <label class="check"><input type="radio" name="mode" value="open"> Open now</label>
+        </fieldset>
+        <div id="confirm-box" hidden>
+          <p class="note">Before opening: privacy policy and terms checked by the attorney; Garden production upload done.</p>
+          <label for="confirm">Type OPEN to confirm</label>
+          <input type="text" id="confirm" maxlength="10" autocomplete="off">
+        </div>
+        <button class="btn green" type="submit">Save</button>
+        <p class="msg" id="settings-msg"></p>
+      </form>
+      <p id="state-line"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Feed</h3>
+      <p id="feed-line"></p>
+      <div class="btns"><button class="btn green" type="button" id="publish-btn">Publish now</button></div>
+      <p class="msg" id="publish-msg"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Homesteads</h3>
+      <div class="table-wrap"><table class="lands"><thead><tr><th>District</th><th>Claimed</th><th>Plots</th></tr></thead><tbody id="home-rows"></tbody></table></div>
+      <p id="acct-line"></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="card"><h3>Recent admin actions</h3><ul id="log"></ul></div>
+  </div>
+</div></section>
+
+</main>
+<footer class="site-foot"><div class="wrap">
+  <div class="foot-grid">
+    <div><h4>Prospect Valley</h4><p>A world of worlds in VRChat – a game, a Realm of land, and the PV Blue Pages directory.</p></div>
+    <div><h4>Explore</h4><ul><li><a href="/realm.html">The Realm</a></li><li><a href="/land-rush.html">Land Rush</a></li><li><a href="/help.html">Help &amp; FAQ</a></li></ul></div>
+    <div><h4>Business</h4><ul><li><a href="/business.html">The PV Blue Pages</a></li><li><a href="/business.html#leasing">Storefronts &amp; leasing</a></li><li><a href="/contact.html">Contact</a></li></ul></div>
+    <div><h4>Contact</h4><ul><li><a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a></li><li><a href="https://www.instagram.com/prospectvalleyvr/" rel="noopener">Instagram @ProspectValleyVR</a></li></ul></div>
+  </div>
+  <p class="fine">© 2026 PVVR, LLC · Prospect Valley VR · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a><br>
+  VRChat is a trademark of VRChat Inc. Prospect Valley is an independent creator project and is not affiliated with or endorsed by VRChat Inc.</p>
+</div></footer>
+<script src="/assets/admin.js" defer></script>
+</body>
+</html>
