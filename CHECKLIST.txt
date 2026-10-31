@@ -26,5 +26,6 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [x] Hourly publisher (worker/publisher.js, cron :07) - GitHub handshake tested: commit on realm/feed-test Oct 31
 [x] Owner: GITHUB_TOKEN secret in Cloudflare (Oct 31); SALT_HC moved from plain variable to Secret (Oct 31)
 [x] PUBLISH_ENABLED true on feed-test (Oct 31)
-[ ] Confirm hourly run lands on realm/feed-test; later FEED_BRANCH main
+[x] First hourly run landed on realm/feed-test (Oct 31 22:07 UTC, feed rev 1, claims closed)
+[ ] Later: FEED_BRANCH main (when the worlds should read live ownership)
 [ ] Privacy Policy + Terms drafts -> attorney
