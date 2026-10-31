@@ -205,34 +205,117 @@ PAGES.append(("contact.html", "Contact",
 
 # ---------------------------------------------------------------- Privacy / Terms (interim)
 PAGES.append(("privacy.html", "Privacy",
- "Prospect Valley privacy notice.",
- hero("Privacy", "Privacy", "A short, plain notice while the website is being built. A full privacy policy will be published before Homestead claims open.", cls="hero page-hero"),
+ "How Prospect Valley handles your information.",
+ hero("Privacy", "Privacy policy", "Draft version 0.1 · 31 October 2026 · being reviewed by our attorney and may change before Homestead claims open.", cls="hero page-hero"),
  """
 <section class="block"><div class="wrap prose">
-  <h2>What we keep</h2>
-  <p>Browsing this website collects nothing about you: no advertising, no tracking cookies, no analytics. The Land Rush page reads a public file to show the countdown and sends nothing about you.</p>
-  <p>If you <strong>create an account</strong> (sign in with Discord, or Google when available), we keep only:</p>
+  <p class="note">This is a working draft written in plain English. If anything here is unclear, write to <a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a> and we'll answer you.</p>
+
+  <h2>Who we are</h2>
+  <p>Prospect Valley is made by PVVR, LLC ("Prospect Valley VR", "we"). This policy covers this website and the Prospect Valley account you can make here. Inside VRChat, VRChat's own privacy policy also applies.</p>
+
+  <h2>Browsing</h2>
+  <p>Reading this website collects nothing about you: no advertising, no tracking cookies, no analytics. The Land Rush countdown reads a public file and sends nothing about you. Our hosting provider (Cloudflare) handles your connection, including your IP address, to deliver the pages and protect the site from attacks; we don't use it to identify you.</p>
+
+  <h2>What we keep if you make an account</h2>
   <ul>
-    <li>the account number your sign-in provider gives us, so we recognise you next time – never your password;</li>
-    <li>your email address, if your provider shares a verified one – used only for Homestead renewal reminders and replies to you;</li>
-    <li>the VRChat display name you type, and whether you ticked "I am 18 or older";</li>
-    <li>from a claim code you check: your origin, calling and heart answer, and the date the code was made;</li>
-    <li>one sign-in cookie, which keeps you signed in for up to 30 days.</li>
+    <li><strong>Sign-in:</strong> the account number your sign-in service (Discord, later Google) gives us, and the date you joined. Never your password.</li>
+    <li><strong>Email:</strong> the email address your sign-in service shares, if it is verified. Used only for Homestead renewal reminders, important notices about your account, and replies to you. No marketing unless you ask for it.</li>
+    <li><strong>VRChat display name</strong> you type, whether a claim code has verified it, and whether you ticked "I am 18 or older".</li>
+    <li><strong>From your claim code:</strong> your origin, calling and heart answer, and the date the code was made. Used codes are kept as a one-way fingerprint so each code works once.</li>
+    <li><strong>Your Homestead:</strong> the plot, when you claimed it, its renewal date and whether you have used your free move.</li>
+    <li><strong>Safety records:</strong> how many codes you tried in the last hour (to stop guessing), and a record of actions our admins take.</li>
+    <li><strong>One sign-in cookie</strong> that keeps you signed in for up to 30 days, and a short-lived cookie (10 minutes) that protects the sign-in step. We store sign-ins only in a scrambled (hashed) form.</li>
   </ul>
-  <p>We never sell or share this information. Players under 18 – or anyone who hasn't ticked the 18+ box – are never shown by name and can't be found by others on the public owner lists.</p>
-  <h2>Your choices</h2>
-  <p>On your account page you can <strong>download your data</strong> or <strong>delete your account</strong> at any time. Deleting removes it straight away.</p>
-  <p>Questions: <a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a></p>
+
+  <h2>What becomes public</h2>
+  <p>So the worlds can show who lives where, we publish a public list of claimed plots. For each plot it shows the plot number and type – and nothing that names you.</p>
+  <ul>
+    <li><strong>18 or older, with a verified name:</strong> your plot also carries a short code worked out from your VRChat display name (an "owner code"). It lets you use Find my home in the worlds. Anyone who knows your exact display name could work out the same code and find your plot, just as they could find you in VRChat. Your name itself is never published unless a future setting lets you choose to show it.</li>
+    <li><strong>Under 18, or not ticked 18+:</strong> your plot is published with no owner code at all and you can't be found by others. Your Homestead is shown to you on this website instead.</li>
+  </ul>
+  <p>The public list is kept in a public GitHub repository. When a plot changes owner or is released, the current list is updated within about 15 minutes, but earlier versions of the list remain in that repository's history.</p>
+
+  <h2>Who we share with</h2>
+  <p>We never sell or rent your information, and we don't share it for advertising. We use these services to run the site, and they handle data for us under their own terms: <strong>Cloudflare</strong> (hosting and our database), <strong>Discord</strong> and later <strong>Google</strong> (only to sign you in), and <strong>GitHub</strong> (hosting the public plot list described above). We may disclose information if the law requires it or to protect players and the service.</p>
+
+  <h2>Age</h2>
+  <p>Prospect Valley is for players 13 and older, matching VRChat. If you are under 13, please don't make an account; if we learn one belongs to a child under 13 we will delete it. Players under 18 can hold a free Homestead, but are never shown by name and can't be found by others.</p>
+
+  <h2>How long we keep it</h2>
+  <p>We keep your account until you delete it. Fingerprints of used claim codes are kept so a code can't be used again. Expired sign-ins are cleared regularly. Our hosting provider's backups may hold deleted data for up to about 30 days.</p>
+
+  <h2>Your choices and rights</h2>
+  <ul>
+    <li><strong>See and download</strong> your data from your account page at any time.</li>
+    <li><strong>Correct</strong> your display name and 18+ tick on your account page.</li>
+    <li><strong>Delete</strong> your account on your account page. It happens straight away; your Homestead returns to the Realm and leaves the public list at the next update.</li>
+    <li>Wherever you live, you can write to us to ask about, correct or delete your information, or to complain. You may also have the right to complain to your local data-protection authority.</li>
+  </ul>
+
+  <h2>Security</h2>
+  <p>We keep the minimum, store sign-ins and used codes only in hashed form, keep secret keys out of our code, and limit admin access to the owners. No system is perfect; if something goes wrong that affects you, we will tell you.</p>
+
+  <h2>Changes</h2>
+  <p>We'll post any change here with a new version date, and email account holders about important changes.</p>
+  <p>Contact: <a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a> · PVVR, LLC</p>
 </div></section>
 """))
 PAGES.append(("terms.html", "Terms",
  "Prospect Valley terms of use.",
- hero("Terms", "Terms of use", "A short, plain notice while the website is in its first stage.", cls="hero page-hero"),
+ hero("Terms", "Terms of use", "Draft version 0.1 · 31 October 2026 · being reviewed by our attorney and may change before Homestead claims open.", cls="hero page-hero"),
  """
 <section class="block"><div class="wrap prose">
-  <p>This website shares information about Prospect Valley, a set of worlds on VRChat. Your use of VRChat is governed by VRChat's own terms.</p>
-  <p>Full terms of use – covering accounts, free Homesteads and the PV Blue Pages – will be published before Homestead claims open.</p>
-  <p>Homesteads are a free licence to use a plot in the game; they are not an investment. Nothing in Prospect Valley can be cashed out for real money.</p>
+  <p class="note">The short version: Homesteads are free, they're a licence to use a plot in a game, they are not an investment, and nothing in Prospect Valley can be cashed out for real money. Play fair, one Homestead per player.</p>
+
+  <h2>1. About these terms</h2>
+  <p>These terms are an agreement between you and PVVR, LLC ("Prospect Valley VR", "we") for this website, your Prospect Valley account and your Homestead. By making an account you accept them. Prospect Valley's worlds run on VRChat; your use of VRChat is governed by VRChat's own terms, and Prospect Valley is an independent creator project, not affiliated with or endorsed by VRChat Inc.</p>
+
+  <h2>2. Who can join</h2>
+  <p>You must be 13 or older (and old enough to use VRChat where you live). If you are under 18, please make sure a parent or guardian is happy for you to join. Tick "I am 18 or older" only if it's true.</p>
+
+  <h2>3. Your account</h2>
+  <ul>
+    <li>One account per person. Link only <strong>your own</strong> VRChat display name; a claim code made in the world proves it.</li>
+    <li>Keep your sign-in service account secure – it is your key to your Prospect Valley account.</li>
+    <li>If your VRChat display name changes, update it here and verify it with a fresh code.</li>
+  </ul>
+
+  <h2>4. Your free Homestead</h2>
+  <ul>
+    <li><strong>What it is:</strong> a free, personal, limited licence to use one plot in the Realm of Prospect Valley, for as long as you keep it renewed. It is not ownership of property, land or any share in Prospect Valley, and it has no cash value.</li>
+    <li><strong>One per player.</strong> Using extra accounts, other people's names or automated tools to get more than one Homestead isn't allowed, and extra Homesteads will be released.</li>
+    <li><strong>How plots are given out:</strong> in one fixed, public order, nearest the Wonder first. You see each offered plot's resources and features before you choose, and the first player to complete a claim on a plot gets it. There is no draw, no chance and no payment.</li>
+    <li><strong>Renewal:</strong> once a year, free, with a fresh code from the worlds. If a Homestead isn't renewed, it returns to the Realm after a grace month, and we'll email you reminders first if we have your email.</li>
+    <li><strong>Free move:</strong> while only Giza is open, your Homestead is placed in Giza; you can move it once, free, to your heart's own Land when that Land opens.</li>
+    <li><strong>Changes to the Realm:</strong> it's a game in development. We may need to move, reshape or reset plots, features or resources for fairness, safety, performance or the game's story; we'll give notice where we can and treat players fairly.</li>
+    <li><strong>Leaving:</strong> if you delete your account, your Homestead returns to the Realm and becomes free for another player.</li>
+  </ul>
+
+  <h2>5. Not an investment – no cashing out</h2>
+  <p>Homesteads, plots, resources, PV Chips and anything else in Prospect Valley are for play only. They are not an investment, we make no promise that they will gain value, and they can't be exchanged for real money with us. Selling, renting or trading accounts or Homesteads for real money or anything outside the game isn't allowed. PV Chips are play-only and are never real-money gambling. Paid land and a player market are not offered; if they ever are, they will come with their own terms.</p>
+
+  <h2>6. Playing fair</h2>
+  <ul>
+    <li>Follow VRChat's terms and community guidelines in our worlds.</li>
+    <li>Don't cheat, exploit bugs, guess codes, overload or attack the site or worlds, or use bots to claim plots. Tell us about bugs instead – we're grateful.</li>
+    <li>Be decent: no harassment, hate or impersonation.</li>
+  </ul>
+
+  <h2>7. Our content</h2>
+  <p>The worlds, art, maps, names, stories and code of Prospect Valley belong to PVVR, LLC. You may take screenshots and videos and share them. Ideas and feedback you send us can be used freely to improve Prospect Valley.</p>
+
+  <h2>8. Suspension and ending</h2>
+  <p>You can delete your account at any time. We may suspend or close accounts, or release Homesteads, that break these terms, with a reason where it's safe to give one. You can write to us if you think we got it wrong.</p>
+
+  <h2>9. The service as it is</h2>
+  <p>Prospect Valley is being built and may change, pause or have errors. We provide it "as is", without promises that it will always be available or error-free, and to the extent the law allows we are not liable for indirect losses or for the loss of virtual items. Nothing here limits rights you have by law that can't be limited.</p>
+
+  <h2>10. Changes to these terms</h2>
+  <p>We'll post changes here with a new version date and email account holders about important ones. If you keep using your account after a change, the new terms apply.</p>
+
+  <h2>11. Contact</h2>
+  <p><a href="mailto:Info@ProspectValleyVR.com">Info@ProspectValleyVR.com</a> · Instagram <a href="https://www.instagram.com/prospectvalleyvr/" rel="noopener">@ProspectValleyVR</a> · PVVR, LLC</p>
 </div></section>
 """))
 

@@ -1,6 +1,6 @@
-# PV Website & Realm Services – Plan (v1.0, Oct 31 2026)
+# PV Website & Realm Services – Plan (v1.2, Oct 31 2026)
 
-Owners' decisions, Oct 31: build **www.ProspectValleyVR.com** fresh (not Wix), hosted on **Cloudflare**, built and maintained by Claude in code; aim for **independence from any one platform** (VRChat first, others later); privacy policy and terms are **living drafts** for the attorney; Claude sets up **"handshakes"** between projects so as much as possible runs by itself; the concierge character is **Herald** (PV_Herald.md). Domain registered at **GoDaddy**.
+Owners' decisions, Oct 31: build **www.ProspectValleyVR.com** fresh (not Wix), hosted on **Cloudflare**, built and maintained by Claude in code; aim for **independence from any one platform** (VRChat first, others later); privacy policy and terms are **living drafts** for the attorney; Claude sets up **"handshakes"** between projects so as much as possible runs by itself; the concierge character is **Herald** (PV_Herald.md). Domain registered at **GoDaddy** – the move to Cloudflare is **parked until needed** (before Google sign-in or the public launch).
 
 Companion files: PV_Data_Feed_Spec.md (v1.1), PV_World_Registry.md, PV_Soul_Scroll_Spec.md (claim codes – salts), PV_Land_Rush_and_Discovery.md, PV_Blue_Pages_Spec.md, PV_Brand_Sheet.md.
 
@@ -14,7 +14,7 @@ Companion files: PV_Data_Feed_Spec.md (v1.1), PV_World_Registry.md, PV_Soul_Scro
               │                         Realm API (Cloudflare Workers)                            │
               │          the Realm database (Cloudflare D1): accounts, plots, claims, owners      │
               └───────────────┬────────────────────────────────────────────────┬─────────────────┘
-                hourly publisher (Cron)                                read-only Realm API (JSON)
+                publisher (Cron, every 15 min)                         read-only Realm API (JSON)
                               ▼                                                ▼
             prospectvalleyvr.github.io/realm  (registry.json + feed/…)    future platforms, apps,
                               ▼                                           partner tools
@@ -33,39 +33,45 @@ Companion files: PV_Data_Feed_Spec.md (v1.1), PV_World_Registry.md, PV_Soul_Scro
 
 | Thing | Where | Owner / login |
 |---|---|---|
-| Domain `prospectvalleyvr.com` | GoDaddy (registrar) – nameservers moved to Cloudflare | Owner |
-| Website, Realm API, database, timers, secrets | Cloudflare (Pages, Workers, D1, Cron Triggers, Secrets) – free tier to start | Owner creates the account in the company's name |
+| Domain `prospectvalleyvr.com` | GoDaddy (registrar) – nameservers move to Cloudflare when needed | Owner |
+| Website, Realm API, database, timers, secrets | Cloudflare Worker `square-snowflake-2d1c` + D1 `pv-realm` + Cron + Secrets – free tier | Owner (company account) |
 | Website source code | private GitHub repo `prospectvalleyvr/pv-website` (**no salts in it, ever**) | Owner's GitHub; Claude works in it |
-| Published feed + registry | public GitHub repo `prospectvalleyvr/realm` (GitHub Pages) – exists | Publisher pushes one commit an hour at most |
-| Company email `Info@ProspectValleyVR.com` | wherever it is hosted today – **its MX records must be copied to Cloudflare before the nameserver switch** | Owner |
+| Published feed + registry | public GitHub repo `prospectvalleyvr/realm` (GitHub Pages); feed on branch `feed-test` until go-live | Publisher commits only when something changed |
+| Company email `Info@ProspectValleyVR.com` | Google Workspace (MX) – **its records must be copied to Cloudflare before the nameserver switch** | Owner |
 
-Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **only** in Cloudflare Secrets. They are never written into code, the repo, the feed or a chat.
+Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **only** in Cloudflare Secrets (type *Secret*, never a plain variable). They are never written into code, the repo, the feed or a chat.
 
 ## 4. Website part 1 – what gets built
 
-**Pages (public):** Home (the Realm, the Garden, the Land Rush, a "Visit in VRChat" button) · The Realm (Lands, Wonders, eras – no lore spoilers) · Land Rush (countdown from the same `opens` time the worlds use) · News · Map (read-only: Lands → Giza parcels, coloured from `status.png`) · Help & FAQ (Herald's voice) · Contact (Info@ProspectValleyVR.com, @ProspectValleyVR) · Privacy · Terms.
+**Pages (public):** Home · The Realm · Land Rush (countdown from the same `opens` time the worlds use) · For business · Help & FAQ (Herald's voice) · Contact · Privacy · Terms · Account. Later: News, Map (read-only: Lands → Giza parcels, coloured from `status.png`).
 
-**Accounts:** email sign-in (magic link, no passwords to leak) → link a **VRChat display name** (typed exactly) → **"I am 18 or older"** tick (unticked = treated as under 18: never in the public owners index, no shown name, no Blue Pages person listing).
+**Accounts (decided Oct 31):** **Sign in with Discord** (live) and **Sign in with Google** (after the domain move) – no passwords. Scopes: Discord `identify email`, Google `openid email`; we keep the account id, the email (renewal reminders, support) and nothing else from them → link a **VRChat display name** (typed exactly) → **"I am 18 or older"** tick (unticked = treated as under 18: never in the public owners index, no shown name, no Blue Pages person listing).
 
-**Claim your Homestead:**
+**Claim your Homestead (built, claims closed):**
 1. Player makes a claim code at the Garden's Scroll Desk.
-2. On the site: enter display name + code. The Worker checks it with the **server-side salt** (same maths as `pv_realm_tools.py hc …`): right name hash, kind = claim, date within 30 days, not used before.
-3. Placement by origin + heart answer (Charter Part 7.5): the home Land's district for that heart, first free claimable plot from a fair, seeded walk – **no lottery, no paid boost**; unique plot features are shown before the player confirms.
-4. Confirmed → saved; the next hourly publish puts it in the feed; the player sees "Your Homestead: GIZ-0412-0377 – visible in-world within the hour".
-5. Renewal once a year with a fresh code (free). Unrenewed Homesteads return to the Crown after a grace month, with emailed reminders.
+2. On the site: display name + code. The Worker checks it with the **server-side salt**: right name hash, kind = claim, date within 30 days, never used (one canonical spelling per code). A claim also verifies the name; one verified account per VRChat name.
+3. Placement (Charter Part 7.5): the districts for that heart; plots offered in one fixed public order (square rings outward from the Great Pyramid) – **no lottery, no paid boost**; 6 offers with deposit + feature shown before choosing; the first completed claim wins.
+4. Saved → the next publish (≤ 15 min) puts it in the feed.
+5. Renewal once a year with a fresh code (free). Unrenewed Homesteads return to the Crown after a grace month, with emailed reminders (renewal reminders: to build).
 
-**Publisher (Cron, hourly, only when something changed):** writes changed parcel files, owners files (18+ only), `map.json`, `status.png`, `index.json` (incl. `opens`), bumps `rev`s, pushes one commit to `realm` with the GitHub API. Validates against PV_Data_Feed_Spec.md before pushing; if validation fails it pushes nothing and alerts the owner by email.
+**Publisher (built):** Cron every 15 minutes; commits only when something changed: changed parcel files, owners buckets (18+ verified only), `index.json` (incl. claims state and `opens`) as one commit to `realm`. Never loses a change (seq per item), one run at a time, ≤ 40 files a run. Later: `map.json`, `status.png`, `status.json`, owner alert e-mail on failure.
 
-**Admin (owners only):** search players / plots, blank a name / sign / logo (takedown), set the Land Rush `opens` time, open / close claims per Land, see publisher health. Two-step sign-in.
+**Admin (built, `/admin.html`):** owners only (ADMINS list); Land Rush `opens` time; claims closed / open at the time / open now (type OPEN); publish now; counts; admin log. To come: search players / plots, takedown of names / signs / logos, per-Land claims, two-step sign-in.
 
-**Off until the attorney answers:** paid plots, checkout, resale. The pages say "Homesteads are free; land sales open later" – never a promise of rising value.
+**Off until the attorney answers:** paid plots, checkout, resale. The pages say Homesteads are free – never a promise of rising value.
+
+## 4b. How code gets to the live site (decided Oct 31)
+
+- The website project lives on the owner's computer (`C:\VRChat Projects\PV Website`, local git). Claude pushes it to the **private** GitHub repo `prospectvalleyvr/pv-website`; Cloudflare **Workers Builds** deploys every push to `main` (`npx wrangler deploy`).
+- Claude's push uses a GitHub fine-grained token kept in `C:\VRChat Projects\PV Keys\` – a folder that is never a git repo and never synced. Cloudflare's own API isn't reachable from Claude's tools, so GitHub is the bridge.
+- Secrets are pasted by the owner into **Cloudflare → the Worker → Settings → Variables and Secrets** as type *Secret*. Never in chat, never in a repo.
 
 ## 5. Handshakes (how the projects talk without anyone carrying messages)
 
 | Handshake | From → to | How |
 |---|---|---|
 | Registry | studio → every world | `registry.json` (rev'd); a world goes live by editing one entry – no re-upload of others |
-| Feed | website → every world | hourly publish (above); worlds bake the URLs |
+| Feed | website → every world | publisher (above); worlds bake the URLs |
 | Claim codes | world → website | player types the code (worlds can't call out) |
 | Soul Scroll | world → world | player copies the code (PV_Soul_Scroll_Spec.md) |
 | Realm API | website → other platforms / tools | read-only JSON: `/api/v1/lands`, `/plots/<code>`, `/owners/<hash>` (18+ only), `/status` |
@@ -75,21 +81,21 @@ Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **
 
 ## 6. Privacy and safety (living drafts, attorney to review)
 
-- Collect only: email, VRChat display name, 18+ tick, claims / plots, owner-form choices, login times. No real names unless a business listing needs them, no addresses, no birthdays, no payment data (no payments yet).
+- Collect only: sign-in id, verified email, VRChat display name, 18+ tick, code answers + date, claims / plots, code-try counter, hashed sign-in and used-code fingerprints, admin log. No real names unless a business listing needs them, no addresses, no birthdays, no payment data (no payments yet).
 - Players 13+ (VRChat's age); under-18 / unknown-age accounts: hidden from Find an owner, no shown name, no person listings.
-- Delete-my-account and download-my-data buttons; takedown within the next hourly batch.
+- Delete-my-account and download-my-data buttons (live); takedown within the next publish.
 - Cookies: sign-in only (no ad trackers). Analytics, if any, cookie-free.
-- Drafts: **Privacy Policy** and **Terms of Use** written by Claude when claims are about to open, marked DRAFT – FOR ATTORNEY REVIEW, versioned in the website repo; the site shows the date of the version in force. Topics for the attorney are listed in § 9.
+- **Drafts published Oct 31:** Privacy Policy v0.1 and Terms of Use v0.1 on the site, marked as drafts under attorney review, versioned in the website repo (`build.py`). They describe exactly what the code does today – update them with every data change.
 
 ## 7. Build order (website)
 
-1. **Owner setup (~20 min, with Claude's step list):** Cloudflare account → add `prospectvalleyvr.com` (Free plan) → check the DNS records it imports (keep every MX / email record) → switch the two nameservers at GoDaddy → GitHub: private repo `pv-website`; a fine-grained token for `realm` only → Cloudflare Secrets (owner pastes salts and token; Claude never sees them in chat).
-2. **Claude:** site skeleton + pages + Herald help, deployed to a preview address; owner reviews.
-3. Accounts + 18+ tick; admin sign-in.
-4. Claim checker (test vectors from `pv_realm_tools.py`; independent review – saved data) + placement (dry run on test data).
-5. Publisher → `realm` (test branch first) → Garden test world reads it (Find my home works end-to-end).
-6. Privacy + Terms drafts → attorney.
-7. Go-live of the site (claims closed) → Land Rush launch gate → `opens` set → claims open on the second.
+1. ~~Static site skeleton~~ – live Oct 31.
+2. ~~Accounts + 18+ tick~~ (Discord) – live Oct 31. Google after the domain move.
+3. ~~Claim checker + placement~~ – built, independent review passed with fixes (Oct 31); claims closed.
+4. ~~Publisher → `realm` (`feed-test`)~~ – live Oct 31. Next: the Garden test world reads `feed-test` (Find my home end-to-end).
+5. ~~Admin page~~ – live Oct 31.
+6. ~~Privacy + Terms drafts v0.1~~ – on the site Oct 31 → **attorney**.
+7. Domain move → Google sign-in → go-live of the site (claims closed) → Land Rush launch gate → `opens` set on the admin page → claims open on the second (mode "open at the time").
 
 ## 8. What the owners do vs. what Claude does
 
@@ -100,6 +106,11 @@ Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **
 
 1. Homestead and plot wording as a **use licence** valid across platforms; what happens to plots if a platform closes.
 2. Free Homesteads to players 13–17: consent, data, renewal reminders by email.
-3. Land Rush "first come, first served" and unique plot features shown before purchase – confirm no lottery / gambling issue.
+3. Land Rush "first come, first served" and unique plot features shown before choosing – confirm no lottery / gambling issue.
 4. Terms for owner signs, logos and owner worlds (IP, takedown, mature content rules).
 5. Data: worldwide players (GDPR / UK GDPR / CCPA basics) for a small studio.
+6. **Review Privacy Policy v0.1 and Terms of Use v0.1** (on the site): governing law, venue / dispute resolution, liability limits, the company's postal address and data-controller details, notice periods for changes.
+7. The public plot list carries an **owner code** (a short hash of the VRChat display name) for 18+ verified owners. Is that personal data under GDPR, and is the disclosure in the privacy policy enough?
+8. **Public history:** earlier versions of the plot list stay in the public GitHub repository's history after a player deletes their account. Acceptable with disclosure, or should the feed branch be squashed regularly (we can do this)?
+9. Under-13s: we ask for 13+ and delete accounts we learn belong to children – enough for COPPA, given we collect an email from the sign-in service?
+10. Deleting an account frees the plot immediately for the next claimer (a player could "hand" a near plot to a friend at a set time). Fine to allow with the terms as written?

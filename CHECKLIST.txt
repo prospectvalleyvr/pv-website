@@ -41,3 +41,8 @@ ADMIN PAGE (Oct 31)
 [x] Claims switch moved from the CLAIMS_OPEN var into the database; publisher every 15 minutes
 [x] flow test 47/0 incl. admin checks
 [x] Owner's key added to ADMINS (discord:601101429209563174, Oct 31)
+
+LEGAL DRAFTS (Oct 31)
+[x] Privacy Policy v0.1 + Terms of Use v0.1 on the site (drafts, under attorney review); describe exactly what the code keeps and publishes
+[ ] Owner: send both pages + PV_Website_Plan.md section 9 questions to the attorney
+[ ] Update both pages whenever data handling changes (new field, new provider, emails)
