@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "echo site is prebuilt and committed",
-    "test": "node test/codes.test.mjs",
+    "test": "node test/codes.test.mjs && node test/giza.test.mjs",
     "site": "python3 build.py"
   }
 }

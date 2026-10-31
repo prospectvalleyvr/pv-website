@@ -1,6 +1,7 @@
 // Cloudflare deploy settings for www.ProspectValleyVR.com (Workers Builds runs `npx wrangler deploy` on every push to main).
 // Static pages from ./site; the Worker (worker/index.js) answers /auth/* and /api/*.
-// Secrets are set in the Cloudflare dashboard, never here: DISCORD_CLIENT_SECRET, SALT_HC (later GOOGLE_CLIENT_SECRET, SALT_LC, GITHUB_TOKEN).
+// Secrets are set in the Cloudflare dashboard, never here: DISCORD_CLIENT_SECRET, SALT_HC, GITHUB_TOKEN (feed publisher; realm only)
+// (later GOOGLE_CLIENT_SECRET, SALT_LC). The publisher runs at minute 7 of every hour; it does nothing until PUBLISH_ENABLED is "true".
 {
   "name": "square-snowflake-2d1c",
   "main": "worker/index.js",
@@ -8,8 +9,12 @@
   "assets": { "directory": "./site", "binding": "ASSETS", "not_found_handling": "404-page", "run_worker_first": ["/auth/*", "/api/*"] },
   "vars": {
     "DISCORD_CLIENT_ID": "1566161957910741142",
-    "CLAIMS_OPEN": "false"
+    "CLAIMS_OPEN": "false",
+    "PUBLISH_ENABLED": "false",
+    "FEED_REPO": "prospectvalleyvr/realm",
+    "FEED_BRANCH": "feed-test"
   },
+  "triggers": { "crons": ["7 * * * *"] },
   "d1_databases": [
     { "binding": "DB", "database_name": "pv-realm", "database_id": "88a8ab1a-9918-4a57-9dc0-1a299a54c2e3" }
   ],

@@ -30,3 +30,12 @@ Herald (the concierge voice for Help/FAQ): PV_Reference/PV_Herald.md.
 ## Deploys
 - Oct 31: first upload via the dashboard (Workers & Pages → static upload). Worker name `square-snowflake-2d1c` (auto-named; rename to `prospectvalley` in its Settings if wanted). Preview: https://square-snowflake-2d1c.twilight-tooth-9ded.workers.dev
 - To update: Workers & Pages → the worker → New deployment → upload the `site` folder again.
+
+## Stage 2b (Oct 31)
+- worker/lib/giza.js: plot keys, parcels, Giza zones, deposits, features, districts, placement order (square rings from the
+  Great Pyramid; START_RING per district). test/giza.test.mjs compares with pv_realm_tools.py.
+- worker/claims.js: /api/offers, /api/claim (only when CLAIMS_OPEN = "true"), tables plots / used_codes / cursors / dirty / meta.
+- worker/publisher.js: cron at :07 → changed parcel files + owner buckets + feed/index.json in ONE commit to FEED_REPO@FEED_BRANCH.
+  Owner hash only for 18+ verified names; names never published yet (no opt-in). Needs secret GITHUB_TOKEN + PUBLISH_ENABLED "true".
+- Local testing: wrangler dev --local in /tmp (never in this folder); workerd can't use the proxy, so test GitHub calls with node.
+- Files copied through /mnt/user-data/outputs get a C2PA metadata block added to SVGs – write SVGs directly on the device.

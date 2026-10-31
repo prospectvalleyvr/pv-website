@@ -274,6 +274,14 @@ PAGES.append(("account.html", "Account",
       </form>
     </div>
     <div class="spacer"></div>
+    <div class="card" id="home-card" hidden><span class="tag">Your Homestead</span><h3 id="home-code"></h3><p id="home-text"></p></div>
+    <div class="card" id="claim-card" hidden><h3>Claim your free Homestead</h3>
+      <p id="claim-intro">Check your claim code above first. Then choose your district and a plot – every plot's deposit and features are shown before you choose.</p>
+      <div class="btns" id="district-btns"></div>
+      <ul class="offers" id="offers"></ul>
+      <p class="msg" id="claim-msg"></p>
+    </div>
+    <div class="spacer"></div>
     <div class="card"><h3>Your data</h3>
       <p><a href="/api/export">Download my data</a></p>
       <form method="post" action="/auth/logout"><button class="btn green" type="submit">Sign out</button></form>

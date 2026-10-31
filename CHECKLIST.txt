@@ -20,6 +20,9 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [ ] Sign in with Google
 [ ] Admin page
 [x] Claim code checker (worker/lib/codes.js) - 311/311 tests vs pv_realm_tools.py, Oct 31
-[ ] Placement + D1 schema (independent review)
-[ ] Hourly publisher -> realm repo (test branch first)
+[x] Plot maths (worker/lib/giza.js) = pv_realm_tools.py: 16,007 checks pass; district sizes match the Charter
+[x] Claims (worker/claims.js): fixed public order outward from the Great Pyramid, 6 offers with deposit + feature shown first, first completed claim wins; local test passed (claim, double claim refused, taken plot skipped, wrong district refused)
+[ ] Independent review of claims + publisher (saved data) before claims open
+[x] Hourly publisher (worker/publisher.js, cron :07) - GitHub handshake tested: commit on realm/feed-test Oct 31
+[ ] Owner: GITHUB_TOKEN secret (realm-only token) in Cloudflare; then PUBLISH_ENABLED true (feed-test), later FEED_BRANCH main
 [ ] Privacy Policy + Terms drafts -> attorney

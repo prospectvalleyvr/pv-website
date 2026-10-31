@@ -1,10 +1,12 @@
 // Prospect Valley – the Realm API (Cloudflare Worker). Static pages come from ./site; this Worker answers /auth/* and /api/*.
 // Stage 2a: Sign in with Discord (Google next), the account (VRChat display name + 18+ tick), "check my claim code",
-// download / delete my data. Plot placement and the hourly publisher come in stage 2b.
+// download / delete my data. Stage 2b: free Homestead claims (claims.js) and the hourly feed publisher (publisher.js).
 // Secrets (Cloudflare → Settings → Variables and Secrets): DISCORD_CLIENT_SECRET, SALT_HC. Vars (wrangler.jsonc): DISCORD_CLIENT_ID.
 // Database: D1 binding DB (tables are created on first use).
 
-import { decodeClaim } from "./lib/codes.js";
+import { decodeClaim, nameHash32Hex } from "./lib/codes.js";
+import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlots, districtsForHeart } from "./claims.js";
+import { publish } from "./publisher.js";
 
 const SESSION_COOKIE = "__Host-pv_session";
 const STATE_COOKIE = "__Host-pv_oauth";
@@ -12,6 +14,12 @@ const SESSION_DAYS = 30;
 const CODE_TRIES_PER_HOUR = 20;
 
 export default {
+  async scheduled(event, env, ctx) {
+    await ensureSchema(env);
+    try { console.log("PV publish", JSON.stringify(await publish(env, "hourly"))); }
+    catch (e) { console.log("PV publish failed", e && e.message); }
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
@@ -36,10 +44,22 @@ async function route(request, env, url) {
   // everything below changes or reads an account: same-origin JSON requests only
   if (m !== "GET" && !sameOrigin(request, url)) return json({ ok: false, message: "Request refused." }, 403);
   const acct = await currentAccount(request, env);
-  if (p === "/api/me" && m === "GET") return json({ ok: true, signedIn: !!acct, account: acct ? publicAccount(acct) : null, claimsOpen: env.CLAIMS_OPEN === "true" });
+  if (p === "/api/me" && m === "GET") {
+    if (!acct) return json({ ok: true, signedIn: false, account: null, claimsOpen: env.CLAIMS_OPEN === "true" });
+    const districts = acct.heart === null || acct.heart === undefined ? [] : districtsForHeart(acct.heart);
+    return json({ ok: true, signedIn: true, account: publicAccount(acct), claimsOpen: env.CLAIMS_OPEN === "true",
+                  homestead: await homesteadOf(env, acct.id), districts });
+  }
   if (!acct) return json({ ok: false, message: "Please sign in first." }, 401);
   if (p === "/api/profile" && m === "POST") return saveProfile(request, env, acct);
   if (p === "/api/check-code" && m === "POST") return checkCode(request, env, acct);
+  if (p === "/api/offers" && m === "GET") {
+    const d = url.searchParams.get("district");
+    const allowed = acct.heart === null || acct.heart === undefined ? [] : districtsForHeart(acct.heart);
+    if (!allowed.includes(d)) return json({ ok: false, message: "Check your claim code first – your heart's answer decides your district." }, 400);
+    return json({ ok: true, district: d, plots: await offers(env, d) });
+  }
+  if (p === "/api/claim" && m === "POST") { const r = await claim(env, acct, await readJson(request)); return json(r, r.status || 200); }
   if (p === "/api/export" && m === "GET") return exportData(env, acct);
   if (p === "/api/delete" && m === "POST") return deleteAccount(request, env, acct);
   return json({ ok: false, message: "Not found." }, 404);
@@ -50,6 +70,7 @@ async function route(request, env, url) {
 let schemaReady = false;
 async function ensureSchema(env) {
   if (schemaReady) return;
+  await env.DB.batch(CLAIM_TABLES.map(sql => env.DB.prepare(sql)));
   await env.DB.batch([
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS accounts (
       id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, email TEXT,
@@ -164,6 +185,14 @@ async function saveProfile(request, env, acct) {
   if (name.length > 32 || /[\u0000-\u001f<>]/.test(name)) return json({ ok: false, message: "That display name isn't valid." }, 400);
   const adult = body.adult === true ? 1 : 0;
   const nameChanged = name !== (acct.vrchat_name || "");
+  if ((nameChanged || adult !== acct.adult) && await homesteadOf(env, acct.id)) {
+    // what the public feed shows depends on the name and the 18+ tick: republish this owner's parcel and owner buckets
+    const rows = (await env.DB.prepare(`SELECT parcel FROM plots WHERE account_id = ?`).bind(acct.id).all()).results;
+    const items = rows.map(r => "parcel:giz:" + r.parcel);
+    if (acct.vrchat_name) items.push("owners:" + nameHash32Hex(acct.vrchat_name).slice(0, 2));
+    if (name) items.push("owners:" + nameHash32Hex(name).slice(0, 2));
+    await env.DB.batch(items.map(i => env.DB.prepare(`INSERT OR IGNORE INTO dirty (item) VALUES (?)`).bind(i)));
+  }
   await env.DB.prepare(`UPDATE accounts SET vrchat_name = ?, adult = ?, name_verified = CASE WHEN ? THEN 0 ELSE name_verified END WHERE id = ?`)
     .bind(name || null, adult, nameChanged ? 1 : 0, acct.id).run();
   return json({ ok: true, message: "Saved." });
@@ -204,6 +233,7 @@ async function exportData(env, acct) {
 async function deleteAccount(request, env, acct) {
   const body = await readJson(request);
   if (!body || body.confirm !== "DELETE") return json({ ok: false, message: "Type DELETE to confirm." }, 400);
+  await forgetPlots(env, acct);   // their Homestead returns to the Crown; the next publish removes it from the feed
   await env.DB.batch([
     env.DB.prepare(`DELETE FROM sessions WHERE account_id = ?`).bind(acct.id),
     env.DB.prepare(`DELETE FROM identities WHERE account_id = ?`).bind(acct.id),
