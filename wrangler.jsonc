@@ -1,0 +1,7 @@
+// Cloudflare deploy settings for www.ProspectValleyVR.com (Workers Builds runs `npx wrangler deploy` on every push to main).
+// Stage 1: static pages from ./site. Stage 2 adds "main": "worker/index.js" and the D1 database binding.
+{
+  "name": "square-snowflake-2d1c",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./site", "not_found_handling": "404-page" }
+}
