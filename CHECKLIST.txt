@@ -24,5 +24,7 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [x] Claims (worker/claims.js): fixed public order outward from the Great Pyramid, 6 offers with deposit + feature shown first, first completed claim wins; local test passed (claim, double claim refused, taken plot skipped, wrong district refused)
 [ ] Independent review of claims + publisher (saved data) before claims open
 [x] Hourly publisher (worker/publisher.js, cron :07) - GitHub handshake tested: commit on realm/feed-test Oct 31
-[ ] Owner: GITHUB_TOKEN secret (realm-only token) in Cloudflare; then PUBLISH_ENABLED true (feed-test), later FEED_BRANCH main
+[x] Owner: GITHUB_TOKEN secret in Cloudflare (Oct 31); SALT_HC moved from plain variable to Secret (Oct 31)
+[x] PUBLISH_ENABLED true on feed-test (Oct 31)
+[ ] Confirm hourly run lands on realm/feed-test; later FEED_BRANCH main
 [ ] Privacy Policy + Terms drafts -> attorney
