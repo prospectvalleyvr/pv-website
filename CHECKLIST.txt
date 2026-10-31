@@ -33,7 +33,8 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [x] Owner: GITHUB_TOKEN secret in Cloudflare (Oct 31); SALT_HC moved from plain variable to Secret (Oct 31)
 [x] PUBLISH_ENABLED true on feed-test (Oct 31)
 [x] First hourly run landed on realm/feed-test (Oct 31 22:07 UTC, feed rev 1, claims closed)
-[ ] Later: FEED_BRANCH main (when the worlds should read live ownership)
+[x] Feed moved to realm main (served by GitHub Pages) in folder feed-test/ (Oct 31); old branch feed-test unused
+[ ] Go-live: FEED_DIR "feed" (publisher rewrites everything there by itself) + worlds baked with the live feed
 [ ] Privacy Policy + Terms drafts -> attorney
 
 ADMIN PAGE (Oct 31)
@@ -46,3 +47,4 @@ LEGAL DRAFTS (Oct 31)
 [x] Privacy Policy v0.1 + Terms of Use v0.1 on the site (drafts, under attorney review); describe exactly what the code keeps and publishes
 [ ] Owner: send both pages + PV_Website_Plan.md section 9 questions to the attorney
 [ ] Update both pages whenever data handling changes (new field, new provider, emails)
+[x] Claims mode "admins only" for testing (public feed still says closed)

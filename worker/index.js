@@ -5,7 +5,7 @@
 // Database: D1 binding DB (tables are created on first use).
 
 import { decodeClaim, nameHash32Hex } from "./lib/codes.js";
-import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlotsStatements, districtsForHeart, markDirty, takeCodeTry, fillNameBuckets, claimsOpen } from "./claims.js";
+import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlotsStatements, districtsForHeart, markDirty, takeCodeTry, fillNameBuckets, claimsOpen, claimsOpenFor } from "./claims.js";
 import { publish } from "./publisher.js";
 import { adminRoute } from "./admin.js";
 
@@ -48,7 +48,7 @@ async function route(request, env, url) {
   if (m !== "GET" && !sameOrigin(request, url)) return json({ ok: false, message: "Request refused." }, 403);
   const acct = await currentAccount(request, env);
   if (p === "/api/me" && m === "GET") {
-    const open = await claimsOpen(env);
+    const open = await claimsOpenFor(env, acct);
     if (!acct) return json({ ok: true, signedIn: false, account: null, claimsOpen: open });
     const districts = acct.heart === null || acct.heart === undefined ? [] : districtsForHeart(acct.heart);
     return json({ ok: true, signedIn: true, account: publicAccount(acct), claimsOpen: open,

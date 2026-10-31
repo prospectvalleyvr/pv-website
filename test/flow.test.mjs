@@ -93,6 +93,12 @@ r = await call("/api/claim", "s1", { code: "x", key: 1 });
 ok("claims closed by default", r.status === 403, r);
 r = await call("/api/admin/settings", "s1", { claimsMode: "open" });
 ok("opening needs OPEN typed", !r.ok, r);
+r = await call("/api/admin/settings", "s1", { claimsMode: "admins" });
+ok("admins-only test mode needs no OPEN", r.ok, r);
+ok("…open for the admin", (await call("/api/me", "s1")).claimsOpen === true);
+ok("…closed for a player", (await call("/api/me", "s2")).claimsOpen === false);
+r = await call("/api/claim", "s2", { code: "x", key: 1 });
+ok("…player claim refused", r.status === 403, r);
 const future = new Date(Date.now() + 86400000).toISOString().replace(/\.\d+Z$/, "Z");
 r = await call("/api/admin/settings", "s1", { claimsMode: "auto", opens: future, confirm: "OPEN" });
 ok("auto mode with a future time", r.ok, r);
@@ -102,7 +108,7 @@ const past = new Date(Date.now() - 60000).toISOString().replace(/\.\d+Z$/, "Z");
 r = await call("/api/admin/settings", "s1", { claimsMode: "auto", opens: past });
 r = await call("/api/me", "s1");
 ok("…and open once the time has passed", r.claimsOpen === true, r);
-ok("settings logged", q(`SELECT COUNT(*) n FROM admin_log`)[0].n === 2);
+ok("settings logged", q(`SELECT COUNT(*) n FROM admin_log`)[0].n === 3);
 
 r = await call("/api/offers?district=nile-valley", "s1");
 ok("offers need a checked code", r.status === 400, r);
@@ -206,6 +212,10 @@ ok("offers keep coming after 60 full rings", r.ok && r.plots.length === 6 && !r.
 const cur = q(`SELECT ring FROM place_cursor WHERE district = 'oasis'`)[0];
 ok("oasis cursor moved out", cur && cur.ring > START_RING.oasis + 59, cur);
 
+// moving the feed to another folder republishes everything there
+env.FEED_DIR = "feed-test";
+await publish();
+ok("new feed folder gets index + parcels + owners", repoFiles["feed-test/index.json"] && repoFiles[`feed-test/giz/${home1.parcel.toLowerCase()}.json`] && repoFiles[`feed-test/owners/${bucketA}.json`].o[nameHash32Hex(ADULT)], Object.keys(repoFiles).filter(k => k.startsWith("feed-test")));
 // admin "publish now"
 sqlite.prepare(`INSERT INTO feed_dirty (item, seq) VALUES ('owners:01', 1)`).run();
 r = await call("/api/admin/publish", "s1", {});

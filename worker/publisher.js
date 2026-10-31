@@ -9,7 +9,9 @@
 //   · one run at a time (a 10-minute lease in meta); the rev number is reserved before the commit, so a run that
 //     fails after committing never reuses a rev;
 //   · at most MAX_ITEMS files per run (D1 / Worker limits); the rest wait for the next run; all reads are one batch.
-// Settings: vars PUBLISH_ENABLED ("true" to run), FEED_BRANCH (e.g. "feed-test", then "main"), FEED_REPO;
+// Settings: vars PUBLISH_ENABLED ("true" to run), FEED_REPO, FEED_BRANCH ("main" – GitHub Pages serves it), FEED_DIR
+// ("feed-test" while testing → worlds baked with the TEST feed read it; "feed" when live). Changing repo / branch / dir
+// republishes everything there on the next run.
 // secret GITHUB_TOKEN (fine-grained, Contents read/write).
 
 import { nameHash32Hex } from "./lib/codes.js";
@@ -37,8 +39,21 @@ export async function publish(env, reason = "hourly") {
 
 async function publishLocked(env, reason) {
   const repo = env.FEED_REPO || "prospectvalleyvr/realm";
-  const branch = env.FEED_BRANCH || "feed-test";
+  const branch = env.FEED_BRANCH || "main";
+  const dir = /^[a-z0-9-]{1,30}$/.test(env.FEED_DIR || "") ? env.FEED_DIR : "feed";
   await fillNameBuckets(env);
+  const target = `${repo}@${branch}/${dir}`;
+  if ((await readMeta(env)).feed_target !== target) {
+    // a new place to publish: write every parcel with plots, every owners bucket in use, and the index there
+    const set = (k, v) => env.DB.prepare(`INSERT INTO meta (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`).bind(k, v);
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO feed_dirty (item, seq) SELECT DISTINCT 'parcel:giz:' || parcel, 1 FROM plots WHERE land = 1
+                      ON CONFLICT(item) DO UPDATE SET seq = feed_dirty.seq + 1`),
+      env.DB.prepare(`INSERT INTO feed_dirty (item, seq) SELECT DISTINCT 'owners:' || a.name_bucket, 1 FROM plots p JOIN accounts a ON a.id = p.account_id
+                      WHERE a.name_bucket IS NOT NULL ON CONFLICT(item) DO UPDATE SET seq = feed_dirty.seq + 1`),
+      set("index_dirty", "1"), set("feed_target", target),
+    ]);
+  }
   const dirty = (await env.DB.prepare(`SELECT item, seq FROM feed_dirty ORDER BY item LIMIT ?`).bind(MAX_ITEMS).all()).results;
   const meta = await readMeta(env);
   const claimsState = claimsOpenFrom(meta) ? "open" : "closed";
@@ -54,11 +69,11 @@ async function publishLocked(env, reason) {
   for (const d of dirty) {
     const [kind, a, b] = d.item.split(":");
     if (kind === "parcel" && a === "giz" && /^[A-HJ-NP-U](1[0-9]|[1-9])$/.test(b))
-      jobs.push({ path: `feed/giz/${b.toLowerCase()}.json`, kind, key: b, stmt: env.DB.prepare(
+      jobs.push({ path: `${dir}/giz/${b.toLowerCase()}.json`, kind, key: b, stmt: env.DB.prepare(
         `SELECT p.key, p.type, a.vrchat_name, a.adult, a.name_verified FROM plots p JOIN accounts a ON a.id = p.account_id
          WHERE p.land = 1 AND p.parcel = ? ORDER BY p.key`).bind(b) });
     else if (kind === "owners" && /^[0-9a-f]{2}$/.test(a))
-      jobs.push({ path: `feed/owners/${a}.json`, kind, key: a, stmt: env.DB.prepare(
+      jobs.push({ path: `${dir}/owners/${a}.json`, kind, key: a, stmt: env.DB.prepare(
         `SELECT p.key, a.vrchat_name FROM plots p JOIN accounts a ON a.id = p.account_id
          WHERE a.adult = 1 AND a.name_verified = 1 AND a.vrchat_name IS NOT NULL AND a.name_bucket = ? ORDER BY p.key`).bind(a) });
     // anything else is not a feed file: it is simply cleared below
@@ -84,7 +99,7 @@ async function publishLocked(env, reason) {
   const index = { format: "pv-feed-1", rev, time: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
                   lands: { giz: { rev, claims: claimsState } } };
   if (meta.opens && OPENS_RE.test(meta.opens)) index.opens = meta.opens;
-  files["feed/index.json"] = JSON.stringify(index);
+  files[`${dir}/index.json`] = JSON.stringify(index);
 
   for (const [path, body] of Object.entries(files)) {
     if (body.length > 300000) return { ok: false, error: "file over budget: " + path };

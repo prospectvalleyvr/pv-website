@@ -12,7 +12,8 @@
   function toLocalInput(iso) { if (!iso) return ""; var d = new Date(iso); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
   function fmt(iso) { return iso ? new Date(iso).toLocaleString() : "never"; }
   function mode() { var r = document.querySelector('input[name="mode"]:checked'); return r ? r.value : "closed"; }
-  function updateConfirm() { $("confirm-box").hidden = !(current === "closed" && mode() !== "closed"); }
+  function isPublic(m) { return m === "open" || m === "auto"; }
+  function updateConfirm() { $("confirm-box").hidden = !(!isPublic(current) && isPublic(mode())); }
 
   function load() {
     fetch("/api/admin/status", { credentials: "same-origin" }).then(function (r) {
@@ -27,7 +28,7 @@
       var radio = document.querySelector('input[name="mode"][value="' + current + '"]'); if (radio) radio.checked = true;
       $("opens").value = toLocalInput(s.settings.opens);
       $("confirm").value = ""; updateConfirm();
-      $("state-line").textContent = "Right now claims are " + (s.settings.claimsOpenNow ? "OPEN" : "closed") +
+      $("state-line").textContent = "Right now claims are " + (s.settings.claimsOpenNow ? "OPEN" : current === "admins" ? "open to admins only" : "closed") +
         (s.settings.opens ? " · opening time " + fmt(s.settings.opens) : " · no opening time set");
       var f = s.feed;
       $("feed-line").textContent = (f.enabled ? "Publishing on" : "Publishing OFF") + " · branch " + f.branch + " · rev " + f.rev +

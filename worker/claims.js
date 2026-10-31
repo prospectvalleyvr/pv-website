@@ -40,7 +40,8 @@ export const CLAIM_TABLES = [
 ];
 
 // ---------------------------------------------------------------- Land Rush settings (admin page; stored in meta)
-// claims_mode: "closed" (default) | "open" | "auto" (opens by itself at the `opens` time). opens: "YYYY-MM-DDTHH:MM:SSZ" or none.
+// claims_mode: "closed" (default) | "open" | "auto" (opens by itself at the `opens` time) | "admins" (only admins may claim –
+// for testing; the public feed still says closed). opens: "YYYY-MM-DDTHH:MM:SSZ" or none.
 export const OPENS_RE = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export function claimsOpenFrom(meta, nowMs = Date.now()) {
   const mode = meta.claims_mode || "closed";
@@ -52,6 +53,23 @@ export async function readMeta(env) {
   return Object.fromEntries((await env.DB.prepare(`SELECT k, v FROM meta`).all()).results.map(r => [r.k, r.v]));
 }
 export async function claimsOpen(env) { return claimsOpenFrom(await readMeta(env)); }
+/** Claims open for this account (public opening, or "admins" test mode for an admin). */
+export async function claimsOpenFor(env, acct) {
+  const meta = await readMeta(env);
+  if (claimsOpenFrom(meta)) return true;
+  return meta.claims_mode === "admins" && !!acct && await isAdmin(env, acct);
+}
+
+export async function signInKeys(env, acct) {
+  const rows = (await env.DB.prepare(`SELECT provider, provider_id FROM identities WHERE account_id = ?`).bind(acct.id).all()).results;
+  return rows.map(r => `${r.provider}:${r.provider_id}`);
+}
+/** Admin = one of the account's sign-ins is in the ADMINS var (wrangler.jsonc). */
+export async function isAdmin(env, acct) {
+  const allowed = String(env.ADMINS || "").split(",").map(s => s.trim()).filter(Boolean);
+  if (!allowed.length) return false;
+  return (await signInKeys(env, acct)).some(k => allowed.includes(k));
+}
 
 /** Statement: mark a feed item (e.g. "parcel:giz:E5", "owners:3f") as changed. */
 export const markDirty = (env, item) =>
@@ -123,7 +141,7 @@ const TAKEN = { status: 409, ok: false, message: "That plot has just been taken 
 
 /** POST /api/claim { code, key } */
 export async function claim(env, acct, body) {
-  if (!(await claimsOpen(env))) return { status: 403, ok: false, message: "Homestead claims open with the Land Rush." };
+  if (!(await claimsOpenFor(env, acct))) return { status: 403, ok: false, message: "Homestead claims open with the Land Rush." };
   if (!env.SALT_HC) return { status: 503, ok: false, message: "Code checking isn't switched on yet." };
   if (!acct.vrchat_name) return { status: 400, ok: false, message: "Add your VRChat display name first." };
   if (await homesteadOf(env, acct.id)) return { status: 409, ok: false, message: "You already have a Homestead – one per player." };

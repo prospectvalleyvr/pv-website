@@ -14,7 +14,8 @@
     "ADMINS": "discord:601101429209563174",
     "PUBLISH_ENABLED": "true",
     "FEED_REPO": "prospectvalleyvr/realm",
-    "FEED_BRANCH": "feed-test"
+    "FEED_BRANCH": "main",
+    "FEED_DIR": "feed-test"
   },
   "triggers": { "crons": ["7,22,37,52 * * * *"] },
   "d1_databases": [
