@@ -39,3 +39,14 @@ Herald (the concierge voice for Help/FAQ): PV_Reference/PV_Herald.md.
   Owner hash only for 18+ verified names; names never published yet (no opt-in). Needs secret GITHUB_TOKEN + PUBLISH_ENABLED "true".
 - Local testing: wrangler dev --local in /tmp (never in this folder); workerd can't use the proxy, so test GitHub calls with node.
 - Files copied through /mnt/user-data/outputs get a C2PA metadata block added to SVGs – write SVGs directly on the device.
+
+## Review fixes (Oct 31) – rules to keep
+- Tables: feed_dirty(item, seq) replaces dirty (mark with markDirty(); the publisher deletes only the seq it published);
+  place_cursor(district, ring, ver) replaces cursors (ver bumps when a plot is freed; forward moves are compare-and-set);
+  accounts.name_bucket = first 2 hex of the owner hash (set wherever the name is set; fillNameBuckets() backfills).
+- Database-enforced: plots.key PK, plots_one_homestead (account_id WHERE type = 1), used_codes on the CANONICAL code
+  (decodeClaim().canon), accounts_verified_name. A claim verifies the name in the same transaction.
+- Every multi-step change is ONE env.DB.batch (a D1 batch is a transaction). Account change BEFORE its feed marks.
+- npm test runs codes + giza + flow (flow uses node:sqlite as a D1 stand-in and a fake GitHub).
+- Copying to the device: device_commit_files can deliver an old copy if a staged path is reused – use a fresh
+  folder name each time and check md5sum on the device.

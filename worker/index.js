@@ -5,13 +5,12 @@
 // Database: D1 binding DB (tables are created on first use).
 
 import { decodeClaim, nameHash32Hex } from "./lib/codes.js";
-import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlots, districtsForHeart } from "./claims.js";
+import { CLAIM_TABLES, offers, claim, homesteadOf, forgetPlotsStatements, districtsForHeart, markDirty, takeCodeTry, fillNameBuckets } from "./claims.js";
 import { publish } from "./publisher.js";
 
 const SESSION_COOKIE = "__Host-pv_session";
 const STATE_COOKIE = "__Host-pv_oauth";
 const SESSION_DAYS = 30;
-const CODE_TRIES_PER_HOUR = 20;
 
 export default {
   async scheduled(event, env, ctx) {
@@ -39,7 +38,10 @@ async function route(request, env, url) {
   const p = url.pathname, m = request.method;
   if (p === "/auth/discord/login" && m === "GET") return discordLogin(request, env, url);
   if (p === "/auth/discord/callback" && m === "GET") return discordCallback(request, env, url);
-  if (p === "/auth/logout" && m === "POST") return logout(request, env);
+  if (p === "/auth/logout" && m === "POST") {
+    if (request.headers.get("Origin") !== url.origin) return json({ ok: false, message: "Request refused." }, 403);
+    return logout(request, env);
+  }
 
   // everything below changes or reads an account: same-origin JSON requests only
   if (m !== "GET" && !sameOrigin(request, url)) return json({ ok: false, message: "Request refused." }, 403);
@@ -84,10 +86,15 @@ async function ensureSchema(env) {
     env.DB.prepare(`CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY, account_id INTEGER NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL)`),
   ]);
+  // name_bucket = first 2 hex of the owner hash (lets the publisher read one owners bucket at a time) – added Oct 31
+  try { await env.DB.prepare(`ALTER TABLE accounts ADD COLUMN name_bucket TEXT`).run(); } catch (e) { /* already there */ }
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS accounts_name_bucket ON accounts(name_bucket)`).run();
+  await fillNameBuckets(env);
   schemaReady = true;
 }
 
 const now = () => new Date().toISOString();
+const bucketOf = (name) => name ? nameHash32Hex(name).slice(0, 2) : null;
 
 async function currentAccount(request, env) {
   const tok = cookie(request, SESSION_COOKIE);
@@ -154,10 +161,17 @@ async function signIn(env, provider, providerId, email) {
     accountId = ident.account_id;
     if (email) await env.DB.prepare(`UPDATE accounts SET email = ? WHERE id = ?`).bind(email, accountId).run();
   } else {
-    const r = await env.DB.prepare(`INSERT INTO accounts (created_at, email) VALUES (?, ?)`).bind(now(), email).run();
-    accountId = r.meta.last_row_id;
-    await env.DB.prepare(`INSERT INTO identities (provider, provider_id, account_id, created_at) VALUES (?, ?, ?, ?)`)
-      .bind(provider, providerId, accountId, now()).run();
+    // account + sign-in method together (one transaction): two first sign-ins at once can't leave a stray account
+    try {
+      await env.DB.batch([
+        env.DB.prepare(`INSERT INTO accounts (created_at, email) VALUES (?, ?)`).bind(now(), email),
+        env.DB.prepare(`INSERT INTO identities (provider, provider_id, account_id, created_at) VALUES (?, ?, last_insert_rowid(), ?)`)
+          .bind(provider, providerId, now()),
+      ]);
+    } catch (e) { /* the other sign-in won – use its account */ }
+    ident = await env.DB.prepare(`SELECT account_id FROM identities WHERE provider = ? AND provider_id = ?`).bind(provider, providerId).first();
+    if (!ident) throw new Error("sign-in: identity missing");
+    accountId = ident.account_id;
   }
   const token = randomToken(32);
   const expires = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
@@ -185,27 +199,30 @@ async function saveProfile(request, env, acct) {
   if (name.length > 32 || /[\u0000-\u001f<>]/.test(name)) return json({ ok: false, message: "That display name isn't valid." }, 400);
   const adult = body.adult === true ? 1 : 0;
   const nameChanged = name !== (acct.vrchat_name || "");
-  if ((nameChanged || adult !== acct.adult) && await homesteadOf(env, acct.id)) {
-    // what the public feed shows depends on the name and the 18+ tick: republish this owner's parcel and owner buckets
-    const rows = (await env.DB.prepare(`SELECT parcel FROM plots WHERE account_id = ?`).bind(acct.id).all()).results;
-    const items = rows.map(r => "parcel:giz:" + r.parcel);
-    if (acct.vrchat_name) items.push("owners:" + nameHash32Hex(acct.vrchat_name).slice(0, 2));
-    if (name) items.push("owners:" + nameHash32Hex(name).slice(0, 2));
-    await env.DB.batch(items.map(i => env.DB.prepare(`INSERT OR IGNORE INTO dirty (item) VALUES (?)`).bind(i)));
-  }
-  await env.DB.prepare(`UPDATE accounts SET vrchat_name = ?, adult = ?, name_verified = CASE WHEN ? THEN 0 ELSE name_verified END WHERE id = ?`)
-    .bind(name || null, adult, nameChanged ? 1 : 0, acct.id).run();
+  // the account change and the feed marks in ONE transaction, change first (a publish can't read the old values
+  // and then clear the marks). The feed shows owners by name and 18+ tick, so both changes republish their plots.
+  const stmts = [env.DB.prepare(`UPDATE accounts SET vrchat_name = ?, name_bucket = ?, adult = ?,
+                                   name_verified = CASE WHEN ? THEN 0 ELSE name_verified END WHERE id = ?`)
+                   .bind(name || null, bucketOf(name), adult, nameChanged ? 1 : 0, acct.id)];
+  if (nameChanged || adult !== acct.adult) stmts.push(...await ownerMarks(env, acct, [acct.vrchat_name, name]));
+  await env.DB.batch(stmts);
   return json({ ok: true, message: "Saved." });
+}
+
+/** Feed marks for everything an account owns, under the given names' owner buckets. */
+async function ownerMarks(env, acct, names) {
+  const rows = (await env.DB.prepare(`SELECT DISTINCT parcel FROM plots WHERE account_id = ?`).bind(acct.id).all()).results;
+  if (!rows.length) return [];
+  const items = new Set(rows.map(r => "parcel:giz:" + r.parcel));
+  for (const n of names) if (n) items.add("owners:" + bucketOf(n));
+  return [...items].map(i => markDirty(env, i));
 }
 
 async function checkCode(request, env, acct) {
   if (!env.SALT_HC) return json({ ok: false, message: "Code checking isn't switched on yet." }, 503);
   if (!acct.vrchat_name) return json({ ok: false, message: "Add your VRChat display name first." }, 400);
   // limit tries per hour (codes can't be guessed in practice, but nobody should be able to try)
-  const since = acct.code_tries_since && Date.now() - Date.parse(acct.code_tries_since) < 3600000 ? acct.code_tries_since : now();
-  const tries = since === acct.code_tries_since ? acct.code_tries : 0;
-  if (tries >= CODE_TRIES_PER_HOUR) return json({ ok: false, message: "Too many tries – please wait an hour and try again." }, 429);
-  await env.DB.prepare(`UPDATE accounts SET code_tries = ?, code_tries_since = ? WHERE id = ?`).bind(tries + 1, since, acct.id).run();
+  if (!(await takeCodeTry(env, acct.id))) return json({ ok: false, message: "Too many tries – please wait an hour and try again." }, 429);
 
   const body = await readJson(request);
   const r = decodeClaim(body && body.code, acct.vrchat_name, env.SALT_HC);
@@ -213,8 +230,12 @@ async function checkCode(request, env, acct) {
   // the code proves the name: lock it to this account (unless another account already proved it)
   const taken = await env.DB.prepare(`SELECT id FROM accounts WHERE vrchat_name = ? AND name_verified = 1 AND id != ?`).bind(acct.vrchat_name, acct.id).first();
   if (taken) return json({ ok: false, message: "That display name is already linked to another account. Write to Info@ProspectValleyVR.com and we'll sort it out." }, 409);
-  await env.DB.prepare(`UPDATE accounts SET name_verified = 1, origin = ?, calling = ?, heart = ? WHERE id = ?`)
-    .bind(r.origin, r.calling, r.heart, acct.id).run();
+  // verifying can make an owner visible in the feed again (e.g. after a name change): republish their plots too
+  const stmts = [env.DB.prepare(`UPDATE accounts SET name_verified = 1, name_bucket = ?, origin = ?, calling = ?, heart = ? WHERE id = ?`)
+    .bind(bucketOf(acct.vrchat_name), r.origin, r.calling, r.heart, acct.id)];
+  if (!acct.name_verified) stmts.push(...await ownerMarks(env, acct, [acct.vrchat_name]));
+  try { await env.DB.batch(stmts); }
+  catch (e) { return json({ ok: false, message: "That display name is already linked to another account. Write to Info@ProspectValleyVR.com and we'll sort it out." }, 409); }
   return json({
     ok: true, kind: r.kind, origin: r.originName, calling: r.callingName, heart: r.heart, made: r.made,
     claimsOpen: env.CLAIMS_OPEN === "true",
@@ -224,7 +245,7 @@ async function checkCode(request, env, acct) {
 
 async function exportData(env, acct) {
   const ids = await env.DB.prepare(`SELECT provider, created_at FROM identities WHERE account_id = ?`).bind(acct.id).all();
-  const data = { account: publicAccount(acct), signInMethods: ids.results, exported: now() };
+  const data = { account: publicAccount(acct), signInMethods: ids.results, homestead: await homesteadOf(env, acct.id), exported: now() };
   return new Response(JSON.stringify(data, null, 2), {
     headers: { "Content-Type": "application/json", "Content-Disposition": 'attachment; filename="prospect-valley-my-data.json"', "Cache-Control": "no-store" },
   });
@@ -233,8 +254,9 @@ async function exportData(env, acct) {
 async function deleteAccount(request, env, acct) {
   const body = await readJson(request);
   if (!body || body.confirm !== "DELETE") return json({ ok: false, message: "Type DELETE to confirm." }, 400);
-  await forgetPlots(env, acct);   // their Homestead returns to the Crown; the next publish removes it from the feed
+  // one transaction: their Homestead returns to the Crown (the next publish removes it from the feed) and the account goes
   await env.DB.batch([
+    ...await forgetPlotsStatements(env, acct),
     env.DB.prepare(`DELETE FROM sessions WHERE account_id = ?`).bind(acct.id),
     env.DB.prepare(`DELETE FROM identities WHERE account_id = ?`).bind(acct.id),
     env.DB.prepare(`DELETE FROM accounts WHERE id = ?`).bind(acct.id),
@@ -257,7 +279,7 @@ async function readJson(request) {
 
 function cookie(request, name) {
   const h = request.headers.get("Cookie") || "";
-  for (const part of h.split(/;\s*/)) { const i = part.indexOf("="); if (i > 0 && part.slice(0, i) === name) return decodeURIComponent(part.slice(i + 1)); }
+  for (const part of h.split(/;\s*/)) { const i = part.indexOf("="); if (i > 0 && part.slice(0, i) === name) { try { return decodeURIComponent(part.slice(i + 1)); } catch { return null; } } }
   return null;
 }
 

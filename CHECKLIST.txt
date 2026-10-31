@@ -22,7 +22,13 @@ STAGE 2 - ACCOUNTS AND CLAIMS
 [x] Claim code checker (worker/lib/codes.js) - 311/311 tests vs pv_realm_tools.py, Oct 31
 [x] Plot maths (worker/lib/giza.js) = pv_realm_tools.py: 16,007 checks pass; district sizes match the Charter
 [x] Claims (worker/claims.js): fixed public order outward from the Great Pyramid, 6 offers with deposit + feature shown first, first completed claim wins; local test passed (claim, double claim refused, taken plot skipped, wrong district refused)
-[ ] Independent review of claims + publisher (saved data) before claims open
+[x] Independent review of claims + publisher (Oct 31): 6 high, 3 medium, 7 low findings - all fixed:
+    one Homestead per account and one use per code enforced by the database; claims verify the name;
+    publisher never loses a change (seq), one run at a time, max 40 files per run, rev reserved first;
+    placement cursor moves out and back (freed plots offered again); shared atomic try limit;
+    deletion and first sign-in are single transactions; logout needs same origin
+[x] test/flow.test.mjs: 36 end-to-end checks pass (accounts -> claims -> publisher); D1 smoke test in workerd passed
+[ ] Before Land Rush: confirm Workers plan limits (free plan: 10 ms CPU, 50 D1 queries per run) under load
 [x] Hourly publisher (worker/publisher.js, cron :07) - GitHub handshake tested: commit on realm/feed-test Oct 31
 [x] Owner: GITHUB_TOKEN secret in Cloudflare (Oct 31); SALT_HC moved from plain variable to Secret (Oct 31)
 [x] PUBLISH_ENABLED true on feed-test (Oct 31)

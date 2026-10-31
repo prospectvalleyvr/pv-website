@@ -122,21 +122,23 @@ export function ringPlots(k) {
 export const START_RING = { "west-desert": 65, "nile-valley": 95, "oasis": 210, "east-desert": 366 };
 export const DISTRICT_PLOTS = { "west-desert": 382156, "nile-valley": 191055, "oasis": 8932, "east-desert": 19146 };
 
-/** The next `count` plots of a district in placement order, starting at ring `fromRing`, skipping `taken` keys. */
+/** The next `count` plots of a district in placement order, starting at ring `fromRing`, skipping `taken` keys.
+ *  firstFree = the ring of the first free plot found (-1 if none in the scanned rings); scannedTo = first ring not scanned. */
 export function nextPlots(district, fromRing, count, taken, maxRings = 60) {
   const out = [];
-  let ring = fromRing, firstRing = -1;
+  let ring = fromRing, firstRing = -1, firstFree = -1;
   for (; ring < fromRing + maxRings && ring <= GC && out.length < count; ring++) {
     for (const [x, y] of ringPlots(ring)) {
       if (gizaDistrict(x, y) !== district) continue;
       if (firstRing < 0) firstRing = ring;
       const k = plotKey(1, x, y);
       if (taken.has(k)) continue;
+      if (firstFree < 0) firstFree = ring;
       out.push(describeGizaPlot(x, y));
       if (out.length >= count) break;
     }
   }
-  return { plots: out, firstRing: firstRing < 0 ? fromRing : firstRing, scannedTo: ring };
+  return { plots: out, firstRing: firstRing < 0 ? fromRing : firstRing, firstFree, scannedTo: ring };
 }
 
 /** Districts a heart answer may choose from while only Giza is open (Charter 7.5). */

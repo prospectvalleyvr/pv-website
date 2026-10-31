@@ -83,6 +83,7 @@ export function decodeClaim(code, displayName, salt, today = new Date(), maxAgeD
     calling, callingName: calling < 8 ? CALLINGS[calling] : "none",
     tests: [answers >> 7, (answers >> 5) & 3, (answers >> 3) & 3], heart: answers & 7,
     made: made.toISOString().slice(0, 10), link,
+    canon: syms.map(i => ALPH[i]).join(""),   // one spelling per code (HC- prefix, O/0, I/L/1, extra letters removed)
   };
 }
 
