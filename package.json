@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "python3 build.py",
-    "test": "node test/codes.test.mjs"
+    "build": "echo site/ is prebuilt by Claude (python3 build.py) and committed",
+    "test": "node test/codes.test.mjs",
+    "site": "python3 build.py"
   }
 }
