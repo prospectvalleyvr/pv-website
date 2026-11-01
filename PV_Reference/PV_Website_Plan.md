@@ -1,4 +1,4 @@
-# PV Website & Realm Services – Plan (v1.2, Oct 31 2026)
+# PV Website & Realm Services – Plan (v1.3, Nov 1 2026)
 
 Owners' decisions, Oct 31: build **www.ProspectValleyVR.com** fresh (not Wix), hosted on **Cloudflare**, built and maintained by Claude in code; aim for **independence from any one platform** (VRChat first, others later); privacy policy and terms are **living drafts** for the attorney; Claude sets up **"handshakes"** between projects so as much as possible runs by itself; the concierge character is **Herald** (PV_Herald.md). Domain registered at **GoDaddy** – the move to Cloudflare is **parked until needed** (before Google sign-in or the public launch).
 
@@ -87,6 +87,13 @@ Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **
 - Cookies: sign-in only (no ad trackers). Analytics, if any, cookie-free.
 - **Drafts published Oct 31:** Privacy Policy v0.1 and Terms of Use v0.1 on the site, marked as drafts under attorney review, versioned in the website repo (`build.py`). They describe exactly what the code does today – update them with every data change.
 
+## 6b. Coming later (Vision v2.2, Nov 1)
+
+- **Decrees** (the pay-per-prompt service, renamed – never "Claude Prompts"): order, gift, review queue, Realm Update Day – after the attorney clears paid services.
+- **States, diplomacy, security and guards, the strategy map, raids, War Pacts and Battle codes** – PV_States_and_War_Spec.md § 14 phases, after Homesteads are live. New tables, feed files (`realm/states.json`, `feed/<land>/control.json`, `feed/war.json`) and a daily tick on the existing cron.
+- **Leaderboards** for Thermopylae wave scores (Battle codes `BT-`).
+- Terms of Use v0.2 when states ship: the Kings' sovereignty, War Pacts and deed transfers, Homesteads never at stake, state funds play-only.
+
 ## 7. Build order (website)
 
 1. ~~Static site skeleton~~ – live Oct 31.
@@ -114,3 +121,6 @@ Secrets (claim-code salt, Blue Pages salt, land-code salt, GitHub token) live **
 8. **Public history:** earlier versions of the plot list stay in the public GitHub repository's history after a player deletes their account. Acceptable with disclosure, or should the feed branch be squashed regularly (we can do this)?
 9. Under-13s: we ask for 13+ and delete accounts we learn belong to children – enough for COPPA, given we collect an email from the sign-in service?
 10. Deleting an account frees the plot immediately for the next claimer (a player could "hand" a near plot to a friend at a set time). Fine to allow with the terms as written?
+11. **States and war (Vision v2.2, PV_States_and_War_Spec.md):** players can agree to wars in which plots they personally stake change hands. May plots **bought with real money** ever be staked, or is that wagering? (Until answered: only plots obtained free in play; Homesteads never.)
+12. Selling capped security / battle advantages (Decree-built defences, a "Royal Protection Charter") for real money – consumer-protection and VRChat Creator Economy rules.
+13. The Kings' power to dissolve or correct any player state, and to void war results – wording for the Terms of Use.
