@@ -239,7 +239,7 @@ async function checkCode(request, env, acct) {
   if (!acct.name_verified) stmts.push(...await ownerMarks(env, acct, [acct.vrchat_name]));
   try { await env.DB.batch(stmts); }
   catch (e) { return json({ ok: false, message: "That display name is already linked to another account. Write to Info@ProspectValleyVR.com and we'll sort it out." }, 409); }
-  const open = await claimsOpen(env);
+  const open = await claimsOpenFor(env, acct);
   return json({
     ok: true, kind: r.kind, origin: r.originName, calling: r.callingName, heart: r.heart, made: r.made,
     claimsOpen: open,

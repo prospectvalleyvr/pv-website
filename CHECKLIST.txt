@@ -48,3 +48,4 @@ LEGAL DRAFTS (Oct 31)
 [ ] Owner: send both pages + PV_Website_Plan.md section 9 questions to the attorney
 [ ] Update both pages whenever data handling changes (new field, new provider, emails)
 [x] Claims mode "admins only" for testing (public feed still says closed)
+[x] END-TO-END Nov 1: Unity code -> website claim (admins-only mode) -> Publish now -> realm/feed-test -> Garden Find my home showed GIZ-0447-0576 (parcel H11)
