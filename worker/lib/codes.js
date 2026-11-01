@@ -63,6 +63,8 @@ function resolveDay(day12, today) {
  * or { ok: false, error, message } with a player-friendly message.
  */
 export function decodeClaim(code, displayName, salt, today = new Date(), maxAgeDays = 30) {
+  // a pasted secret can pick up a stray space or line break at either end – the salt itself never has one
+  salt = String(salt || "").trim();
   if (!salt) throw new Error("SALT_HC missing");
   let s = String(code || "").trim().toUpperCase();
   if (s.startsWith("HC")) s = s.slice(2);
